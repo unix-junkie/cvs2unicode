@@ -1,5 +1,8 @@
 cvs2unicode, an 8-bit to Unicode converter with automatic codepage detection for CVS
 ====================================================================================
+[![Build Status](https://api.travis-ci.org/unix-junkie/cvs2unicode.png?branch=master)](https://travis-ci.org/unix-junkie/cvs2unicode)
+
+Please follow [this link](http://unix-junkie.github.io/cvs2unicode/) for project documentation.
 
 This project includes the [Russian ispell dictionary](ftp://scon155.phys.msu.su/pub/russian/ispell/rus-ispell.tar.gz) 
 by [Alexander Lebedev](http://scon155.phys.msu.su/eng/lebedev.html).
