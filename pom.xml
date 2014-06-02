@@ -66,7 +66,7 @@
 	</developers>
 
 	<properties>
-		<project.build.sourceEncoding>US-ASCII</project.build.sourceEncoding>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<emacsMode>true</emacsMode>
 		<exec.mainClass>com.github.unix_junkie.cvs2unicode.Main</exec.mainClass>
 		<javadoc.plugin.version>2.9.1</javadoc.plugin.version>

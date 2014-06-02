@@ -8,23 +8,53 @@ import static com.github.unix_junkie.cvs2unicode.Utilities.splitIntoWords;
 import static java.io.File.separatorChar;
 import static java.lang.System.exit;
 import static java.lang.System.getProperty;
+import static java.util.Arrays.asList;
+import static java.util.Arrays.stream;
+import static java.util.stream.Collectors.toCollection;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.PrintStream;
+import java.io.UncheckedIOException;
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
+
+import com.atlascopco.hunspell.Hunspell;
 
 /**
  * @author Andrew ``Bass'' Shcheglov &lt;mailto:andrewbass@gmail.com&gt;
  */
 public final class Dictionary {
+	private static final String POSIX_SEARCH_PATHS[] = {
+		"/usr/share/hunspell",
+		"/usr/local/share/hunspell",
+		getProperty("user.dir"),
+	};
+
+	private static final String DARWIN_SEARCH_PATHS[] = {
+		"/System/Library/Spelling",
+		"/Library/Spelling",
+		getProperty("user.home") + File.separatorChar + "Spelling",
+		"/opt/local/share/hunspell",
+		"/sw/share/hunspell",
+	};
+
+	private static final String DICTIONARY_SUFFIX = ".dic";
+
+	private static final String AFFIX_SUFFIX = ".aff";
+
+
+	private final Set<Hunspell> analyzers = new LinkedHashSet<>();
+
 	private final SortedSet<String> dictionary = new TreeSet<>();
 
 	private final DictionaryChangeListener changeListener;
@@ -40,9 +70,7 @@ public final class Dictionary {
 		/*
 		 * Dictionaries are loaded *before* the listener is initialized.
 		 */
-		this.loadBundledDictionary("/ru_RU-ispell.dic");
-		this.loadBundledDictionary("/ru_RU-hunspell.dic");
-		this.loadBundledDictionary("/ru_RU-hunspell-debian.dic");
+		this.loadHunspellDictionary("ru_RU", "uk_UA");
 		this.loadCustomDictionary();
 
 		this.changeListener = changeListener;
@@ -62,7 +90,8 @@ public final class Dictionary {
 	 * @param word
 	 */
 	public boolean contains(final String word) {
-		return this.dictionary.contains(word.toLowerCase());
+		return this.analyzers.stream().anyMatch(hunspell -> hunspell.spell(word))
+				|| this.dictionary.contains(word.toLowerCase());
 	}
 
 	/**
@@ -126,7 +155,54 @@ public final class Dictionary {
 	}
 
 	/**
-	 * @param in
+	 * @param locales the list of locales in "xx_XX" format (i. e. "ru_RU", "uk_UK" etc.).
+	 */
+	private void loadHunspellDictionary(final String ... locales) {
+		final Set<String> basenames = new LinkedHashSet<>(asList(locales));
+
+		final Set<String> searchPaths = new LinkedHashSet<>();
+		stream(POSIX_SEARCH_PATHS).map(File::new).filter(File::exists).map(file -> {
+			try {
+				return file.getCanonicalPath();
+			} catch (final IOException ioe) {
+				throw new UncheckedIOException(ioe);
+			}
+		}).collect(toCollection(() -> searchPaths));
+
+		if (getProperty("os.name").equals("Mac OS X")) {
+			stream(DARWIN_SEARCH_PATHS).map(File::new).filter(File::exists).map(file -> {
+				try {
+					return file.getCanonicalPath();
+				} catch (final IOException ioe) {
+					throw new UncheckedIOException(ioe);
+				}
+			}).collect(toCollection(() -> searchPaths));
+		}
+
+
+		final Set<String> dictionaries = new LinkedHashSet<>();
+
+		basenames.forEach(basename -> {
+			searchPaths.stream().map(searchPath -> new File(searchPath, basename + DICTIONARY_SUFFIX)).forEach(dictionary -> {
+				try {
+					final File affix = new File(dictionary.getCanonicalFile().getParent(), basename + AFFIX_SUFFIX);
+					if (dictionary.exists() && affix.exists()) {
+						final String dictionaryPath = dictionary.getCanonicalPath();
+						dictionaries.add(dictionaryPath.substring(0, dictionaryPath.length() - 4));
+					}
+				} catch (final IOException ioe) {
+					throw new UncheckedIOException(ioe);
+				}
+			});
+		});
+
+		dictionaries.stream().map(dictionary -> new Hunspell(dictionary + DICTIONARY_SUFFIX, dictionary + AFFIX_SUFFIX)).collect(toCollection(() -> this.analyzers));
+	}
+
+	/**
+	 * Loads a hunspell, an ispell, or a simple word-per-line dictionary.
+	 *
+	 * @param in the input stream used to load the dictionary from.
 	 */
 	private void loadDictionary(final InputStream in) {
 		try {
@@ -154,15 +230,6 @@ public final class Dictionary {
 			ioe.printStackTrace();
 			exit(0);
 		}
-	}
-
-	/**
-	 * Loads a hunspell or ispell dictionary.
-	 *
-	 * @param name
-	 */
-	private void loadBundledDictionary(final String name) {
-		this.loadDictionary(Dictionary.class.getResourceAsStream(name));
 	}
 
 	private void loadCustomDictionary() {
