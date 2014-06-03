@@ -14,6 +14,7 @@ import java.io.InputStreamReader;
 
 import javax.swing.JFrame;
 
+import com.github.unix_junkie.cvs2unicode.cs.DosAsUnicode;
 import com.github.unix_junkie.cvs2unicode.cs.IBM866;
 import com.github.unix_junkie.cvs2unicode.cs.ISO_8859_1;
 import com.github.unix_junkie.cvs2unicode.cs.ISO_8859_5;
@@ -35,6 +36,7 @@ public abstract class Main {
 		new MS1251(),
 		new KWK(),
 		new IBM866(),
+		new DosAsUnicode(),
 		new UTF_8(),
 	};
 
