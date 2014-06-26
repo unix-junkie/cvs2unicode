@@ -5,14 +5,15 @@ package com.github.unix_junkie.cvs2unicode.ui;
 
 import static javax.swing.JOptionPane.QUESTION_MESSAGE;
 import static javax.swing.JOptionPane.showInputDialog;
+import static javax.swing.SwingUtilities.invokeAndWait;
+import static javax.swing.SwingUtilities.invokeLater;
 
 import java.awt.Component;
 import java.io.File;
 import java.io.UnsupportedEncodingException;
+import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.List;
-
-import javax.swing.JTextField;
 
 import com.github.unix_junkie.cvs2unicode.CharsetDecoder;
 import com.github.unix_junkie.cvs2unicode.Disambiguator;
@@ -25,51 +26,60 @@ public final class InteractiveDisambiguator implements Disambiguator {
 
 	private final Component parent;
 
-	private final JTextField message = new JTextField();
-
-	{
-		this.message.setEditable(false);
-	}
+	private final Message message;
 
 	/**
 	 * @param decoders
 	 * @param parent
+	 * @param localCvsRoot
 	 */
 	public InteractiveDisambiguator(final CharsetDecoder decoders[],
-			final Component parent) {
+			final Component parent,
+			final File localCvsRoot) {
 		this.decoders = decoders.clone();
 		this.parent = parent;
+		this.message = new Message(localCvsRoot);
 	}
 
+	boolean flag = true;
+
 	/**
-	 * @see Disambiguator#decode(byte[], File)
+	 * @see Disambiguator#decode(byte[], File, int)
 	 */
 	@Override
-	public String decode(final byte data[], final File file) {
+	public String decode(final byte data[], final File file, final int lineNumber) {
 		try {
 			final List<Option> options = new ArrayList<>();
 			for (final CharsetDecoder decoder : this.decoders) {
 				final String decodedData = decoder.decode(data);
 				options.add(new Option(decoder, decodedData));
 			}
-			this.message.setText("File: " + file.getPath() + ':');
+			invokeLater(() -> {
+				this.message.setFile(file);
+				this.message.setLine(lineNumber);
+				this.message.setPreviouslyUsedEncodings(this.flag ? new String[]{} : new String[]{"KOI8-R", "IBM866", "CP1251"}); // TBD
+				this.flag = !this.flag;
+			});
 			String line;
 			do {
-				final Option option = (Option) showInputDialog(this.parent,
-						this.message,
-						"Select an Option",
-						QUESTION_MESSAGE,
-						null,
-						options.toArray(),
-						null);
-				line = option == null ? null : option.getText();
+				final Option option[] = new Option[1];
+				invokeAndWait(() -> {
+					option[0] = (Option) showInputDialog(this.parent,
+							this.message,
+							"Select an Option",
+							QUESTION_MESSAGE,
+							null,
+							options.toArray(),
+							null);
+				});
+				line = option[0] == null ? null : option[0].getText();
 			} while (line == null);
 			return line;
-		} catch (final UnsupportedEncodingException uee) {
+		} catch (final UnsupportedEncodingException | InvocationTargetException | InterruptedException e) {
 			/*
 			 * Never.
 			 */
-			uee.printStackTrace();
+			e.printStackTrace();
 			return null;
 		}
 	}

@@ -15,7 +15,8 @@ public interface Disambiguator {
 	 *
 	 * @param data the 8-bit data to be transcoded.
 	 * @param file the file being changed
+	 * @param lineNumber the number of line being changed within the file
 	 * @return the transcoded Unicode string.
 	 */
-	String decode(final byte data[], File file);
+	String decode(final byte data[], final File file, final int lineNumber);
 }

@@ -45,8 +45,9 @@ public final class Decoder {
 	/**
 	 * @param data
 	 * @param file the file being changed
+	 * @param lineNumber
 	 */
-	public String decode(final byte data[], final File file) {
+	public String decode(final byte data[], final File file, final int lineNumber) {
 		try {
 			if (isAscii(data)) {
 				/*
@@ -68,7 +69,7 @@ public final class Decoder {
 			}
 
 			final String decodedData = maximumHitRating == .0f
-					? this.disambiguator.decode(data, file)
+					? this.disambiguator.decode(data, file, lineNumber)
 					: decoder.decode(data);
 
 			final List<String> words = splitIntoWords(decodedData);

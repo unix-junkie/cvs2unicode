@@ -12,7 +12,12 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 
+import javax.swing.JDialog;
 import javax.swing.JFrame;
+import javax.swing.UIManager;
+import javax.swing.UnsupportedLookAndFeelException;
+import javax.swing.plaf.metal.DefaultMetalTheme;
+import javax.swing.plaf.metal.MetalLookAndFeel;
 
 import com.github.unix_junkie.cvs2unicode.cs.DosAsUnicode;
 import com.github.unix_junkie.cvs2unicode.cs.IBM866;
@@ -162,8 +167,9 @@ public abstract class Main {
 			final String encoding = "ISO-8859-1";
 			try (final BufferedReader in = new BufferedReader(new InputStreamReader(new FileInputStream(file), encoding))) {
 				String line;
+				int lineNumber = 0;
 				while ((line = in.readLine()) != null) {
-					decoder.decode(line.getBytes(encoding), file);
+					decoder.decode(line.getBytes(encoding), file, ++lineNumber);
 				}
 			}
 		} catch (final IOException ioe) {
@@ -204,14 +210,23 @@ public abstract class Main {
 			return;
 		}
 
-		final File root = new File(cvsroot.substring(":local:".length()));
-		if (!root.exists()) {
-			System.out.println("No such file or directory: " + root);
+		final File localCvsRoot = new File(cvsroot.substring(":local:".length()));
+		if (!localCvsRoot.exists()) {
+			System.out.println("No such file or directory: " + localCvsRoot);
 			return;
 		}
-		if (!root.isDirectory()) {
-			System.out.println("Not a directory: " + root);
+		if (!localCvsRoot.isDirectory()) {
+			System.out.println("Not a directory: " + localCvsRoot);
 			return;
+		}
+
+		try {
+			JFrame.setDefaultLookAndFeelDecorated(true);
+			JDialog.setDefaultLookAndFeelDecorated(true);
+			MetalLookAndFeel.setCurrentTheme(new DefaultMetalTheme());
+			UIManager.setLookAndFeel(new MetalLookAndFeel());
+		} catch (final UnsupportedLookAndFeelException ulafe) {
+			ulafe.printStackTrace();
 		}
 
 		final SortedListModel<String> listModel = new SortedListModel<>();
@@ -223,7 +238,7 @@ public abstract class Main {
 			listModel.addElement(word);
 			System.out.println(word);
 		}));
-		final Decoder decoder = new Decoder(DECODERS, dictionary, new InteractiveDisambiguator(DECODERS, frame));
-		processDirectory(decoder, root);
+		final Decoder decoder = new Decoder(DECODERS, dictionary, new InteractiveDisambiguator(DECODERS, frame, localCvsRoot));
+		processDirectory(decoder, localCvsRoot);
 	}
 }
