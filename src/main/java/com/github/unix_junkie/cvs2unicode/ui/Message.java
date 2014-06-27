@@ -17,6 +17,7 @@ import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.io.File;
+import java.io.IOException;
 
 import javax.swing.AbstractListModel;
 import javax.swing.JButton;
@@ -25,6 +26,9 @@ import javax.swing.JList;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 import javax.swing.ListModel;
+
+import com.github.unix_junkie.cvs2unicode.editor.EditorProvider;
+import com.github.unix_junkie.cvs2unicode.editor.VimFactory;
 
 /**
  * A "message" component inserted into JOptionPane.
@@ -38,8 +42,20 @@ final class Message extends JPanel {
 
 	private static final String KEY_ENCODINGS = "encodings";
 
+	static final EditorProvider EDITOR = new VimFactory().newEditor();
+
 
 	private final File localCvsRoot;
+
+	/**
+	 * Current file.
+	 */
+	File file;
+
+	/**
+	 * Current line.
+	 */
+	int line;
 
 	private final JTextField fileTextField;
 
@@ -112,9 +128,16 @@ final class Message extends JPanel {
 
 		final JButton lineButton = new JButton("...");
 		lineButton.addActionListener(e -> {
-			lineButton.setEnabled(false);
-			lineButton.setToolTipText("Vim not found in PATH");
-			// TBD
+			if (Message.this.file == null) {
+				return;
+			}
+
+			try {
+				EDITOR.edit(Message.this.file, Message.this.line);
+			} catch (final IOException ioe) {
+				lineButton.setEnabled(false);
+				lineButton.setToolTipText(ioe.getMessage());
+			}
 		});
 		lineButton.setDefaultCapable(false);
 		lineButton.setToolTipText("Go to line");
@@ -155,12 +178,16 @@ final class Message extends JPanel {
 	}
 
 	/**
+	 * Should be invoked from AWT event queue.
+	 *
 	 * @param file
 	 */
 	void setFile(final File file) {
 		if (file == null) {
 			throw new IllegalArgumentException();
 		}
+
+		this.file = file;
 
 		final String path = file.getPath();
 		final String localCvsRootPath = this.localCvsRoot.getPath();
@@ -169,9 +196,12 @@ final class Message extends JPanel {
 	}
 
 	/**
+	 * Should be invoked from AWT event queue.
+	 *
 	 * @param line
 	 */
 	void setLine(final int line) {
+		this.line = line;
 		this.lineTextField.setText(Integer.toString(line));
 	}
 
