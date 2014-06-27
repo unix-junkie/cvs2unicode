@@ -55,7 +55,7 @@ public final class Dictionary {
 
 	private final Set<Hunspell> analyzers = new LinkedHashSet<>();
 
-	private final SortedSet<String> dictionary = new TreeSet<>();
+	private final SortedSet<String> userDictionary = new TreeSet<>();
 
 	private final DictionaryChangeListener changeListener;
 
@@ -83,7 +83,7 @@ public final class Dictionary {
 		if (this.changeListener != null && !this.contains(word)) {
 			this.changeListener.wordAdded(word.toLowerCase());
 		}
-		this.dictionary.add(word.toLowerCase());
+		this.userDictionary.add(word.toLowerCase());
 	}
 
 	/**
@@ -91,7 +91,7 @@ public final class Dictionary {
 	 */
 	public boolean contains(final String word) {
 		return this.analyzers.stream().anyMatch(hunspell -> hunspell.spell(word))
-				|| this.dictionary.contains(word.toLowerCase());
+				|| this.userDictionary.contains(word.toLowerCase());
 	}
 
 	/**
@@ -149,7 +149,7 @@ public final class Dictionary {
 	 * @param out
 	 */
 	public void print(final PrintStream out) {
-		for (final String word : this.dictionary) {
+		for (final String word : this.userDictionary) {
 			out.println(word);
 		}
 	}

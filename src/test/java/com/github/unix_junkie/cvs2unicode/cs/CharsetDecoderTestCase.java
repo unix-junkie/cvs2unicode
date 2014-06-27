@@ -18,6 +18,7 @@ public final class CharsetDecoderTestCase {
 	/**
 	 * @throws UnsupportedEncodingException
 	 */
+	@SuppressWarnings("static-method")
 	@Test
 	public void testUku() throws UnsupportedEncodingException {
 		final CharsetDecoder uku = new UKU();
@@ -50,6 +51,7 @@ public final class CharsetDecoderTestCase {
 	/**
 	 * @throws UnsupportedEncodingException
 	 */
+	@SuppressWarnings("static-method")
 	@Test
 	public void testDosAsUnicode() throws UnsupportedEncodingException {
 		final CharsetDecoder dosAsUnicode = new DosAsUnicode();
