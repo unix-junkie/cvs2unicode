@@ -81,7 +81,7 @@ public final class Decoder {
 				if (isAscii(word.getBytes("UTF-8"))) {
 					continue;
 				}
-				this.dictionary.add(word);
+				this.dictionary.add(word, file, lineNumber, decoder);
 			}
 
 			return decodedData;

@@ -4,6 +4,7 @@
 package com.github.unix_junkie.cvs2unicode;
 
 import static java.lang.System.getenv;
+import static java.util.Arrays.asList;
 import static javax.swing.SwingUtilities.invokeLater;
 
 import java.io.BufferedReader;
@@ -11,6 +12,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.util.Vector;
 
 import javax.swing.JDialog;
 import javax.swing.JFrame;
@@ -18,6 +20,7 @@ import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
 import javax.swing.plaf.metal.DefaultMetalTheme;
 import javax.swing.plaf.metal.MetalLookAndFeel;
+import javax.swing.table.DefaultTableModel;
 
 import com.github.unix_junkie.cvs2unicode.cs.DosAsUnicode;
 import com.github.unix_junkie.cvs2unicode.cs.IBM866;
@@ -230,12 +233,16 @@ public abstract class Main {
 		}
 
 		final SortedListModel<String> listModel = new SortedListModel<>();
-		final JFrame frame = MainFrameFactory.newInstance(listModel);
+		final DefaultTableModel tableModel = new DefaultTableModel(
+				new Vector<>(),
+				new Vector<>(asList("Word", "File", "Line", "Encoding")));
+		final JFrame frame = MainFrameFactory.newInstance(listModel, tableModel);
 		frame.pack();
 		frame.setVisible(true);
 
-		final Dictionary dictionary = new Dictionary(word -> invokeLater(() -> {
+		final Dictionary dictionary = new Dictionary((word, file, lineNumber, decoder) -> invokeLater(() -> {
 			listModel.addElement(word);
+			tableModel.addRow(new String[] {word, file.getName(), String.valueOf(lineNumber), decoder.charset()});
 			System.out.println(word);
 		}));
 		final Decoder decoder = new Decoder(DECODERS, dictionary, new InteractiveDisambiguator(DECODERS, frame, localCvsRoot));

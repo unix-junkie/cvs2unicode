@@ -21,6 +21,7 @@ import javax.swing.JProgressBar;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.ListModel;
+import javax.swing.table.TableModel;
 
 /**
  * @author Andrew ``Bass'' Shcheglov &lt;mailto:andrewbass@gmail.com&gt;
@@ -32,9 +33,10 @@ public final class MainFrameFactory {
 
 	/**
 	 * @param listModel
+	 * @param tableModel
 	 * @wbp.parser.entryPoint
 	 */
-	public static JFrame newInstance(final ListModel<String> listModel) {
+	public static JFrame newInstance(final ListModel<String> listModel, final TableModel tableModel) {
 		final JPanel contentPane = new JPanel(new GridBagLayout());
 
 
@@ -61,6 +63,7 @@ public final class MainFrameFactory {
 
 
 		final JTable table = new JTable();
+		table.setModel(tableModel);
 
 		final JScrollPane tableScrollPane = new JScrollPane();
 		tableScrollPane.setViewportView(table);
