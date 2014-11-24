@@ -5,6 +5,7 @@ package com.github.unix_junkie.cvs2unicode;
 
 import static java.lang.System.getenv;
 import static java.util.Arrays.asList;
+import static java.util.concurrent.Executors.newSingleThreadExecutor;
 import static javax.swing.SwingUtilities.invokeLater;
 
 import java.io.BufferedReader;
@@ -13,6 +14,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.Vector;
+import java.util.concurrent.ExecutorService;
 
 import javax.swing.JDialog;
 import javax.swing.JFrame;
@@ -188,7 +190,7 @@ public abstract class Main {
 	 * @param decoder
 	 * @param directory
 	 */
-	private static void processDirectory(final Decoder decoder, final File directory) {
+	static void processDirectory(final Decoder decoder, final File directory) {
 		for (final File file : directory.listFiles()) {
 			if (file.isFile()) {
 				processFile(decoder, file);
@@ -223,6 +225,8 @@ public abstract class Main {
 			return;
 		}
 
+		final ExecutorService backgroundWorker = newSingleThreadExecutor();
+
 		try {
 			JFrame.setDefaultLookAndFeelDecorated(true);
 			JDialog.setDefaultLookAndFeelDecorated(true);
@@ -232,20 +236,23 @@ public abstract class Main {
 			ulafe.printStackTrace();
 		}
 
-		final SortedListModel<String> listModel = new SortedListModel<>();
 		final DefaultTableModel tableModel = new DefaultTableModel(
 				new Vector<>(),
 				new Vector<>(asList("Word", "File", "Line", "Encoding")));
-		final JFrame frame = MainFrameFactory.newInstance(listModel, tableModel);
-		frame.pack();
-		frame.setVisible(true);
 
 		final Dictionary dictionary = new Dictionary((word, file, lineNumber, decoder) -> invokeLater(() -> {
-			listModel.addElement(word);
 			tableModel.addRow(new String[] {word, file.getName(), String.valueOf(lineNumber), decoder.charset()});
 			System.out.println(word);
 		}));
-		final Decoder decoder = new Decoder(DECODERS, dictionary, new InteractiveDisambiguator(DECODERS, frame, localCvsRoot));
-		processDirectory(decoder, localCvsRoot);
+		final InteractiveDisambiguator disambiguator = new InteractiveDisambiguator(DECODERS, localCvsRoot);
+		final Decoder decoder = new Decoder(DECODERS, dictionary, disambiguator);
+
+		final JFrame frame = MainFrameFactory.newInstance(tableModel, backgroundWorker, () -> {
+			processDirectory(decoder, localCvsRoot);
+			return null;
+		});
+		disambiguator.setParent(frame);
+		frame.pack();
+		frame.setVisible(true);
 	}
 }

@@ -15,6 +15,8 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.annotation.Nullable;
+
 import com.github.unix_junkie.cvs2unicode.CharsetDecoder;
 import com.github.unix_junkie.cvs2unicode.Disambiguator;
 
@@ -24,20 +26,18 @@ import com.github.unix_junkie.cvs2unicode.Disambiguator;
 public final class InteractiveDisambiguator implements Disambiguator {
 	private final CharsetDecoder decoders[];
 
-	private final Component parent;
+	@Nullable
+	private volatile Component parent;
 
 	private final Message message;
 
 	/**
 	 * @param decoders
-	 * @param parent
 	 * @param localCvsRoot
 	 */
 	public InteractiveDisambiguator(final CharsetDecoder decoders[],
-			final Component parent,
 			final File localCvsRoot) {
 		this.decoders = decoders.clone();
-		this.parent = parent;
 		this.message = new Message(localCvsRoot);
 	}
 
@@ -82,6 +82,13 @@ public final class InteractiveDisambiguator implements Disambiguator {
 			e.printStackTrace();
 			return null;
 		}
+	}
+
+	/**
+	 * @param parent
+	 */
+	public void setParent(@Nullable final Component parent) {
+		this.parent = parent;
 	}
 
 	/**
