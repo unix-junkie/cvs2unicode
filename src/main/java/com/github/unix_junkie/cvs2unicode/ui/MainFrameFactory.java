@@ -54,7 +54,12 @@ public final class MainFrameFactory {
 		@Override
 		public void windowClosing(final WindowEvent e) {
 			final JFrame frame = (JFrame) e.getSource();
-			showMessageDialog(frame, "A background operation is currently in progress. Please wait until it completes and try again.");
+			/*
+			 * If we show the dialog immediately rather than queue
+			 * the operation, other listeners waiting to process the
+			 * event will be blocked until the dialog is disposed.
+			 */
+			invokeLater(() -> showMessageDialog(frame, "A background operation is currently in progress. Please wait until it completes and try again."));
 		}
 	};
 
