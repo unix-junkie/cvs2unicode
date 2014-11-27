@@ -3,12 +3,10 @@
  */
 package com.github.unix_junkie.cvs2unicode;
 
-import static java.lang.System.currentTimeMillis;
 import static java.lang.System.getenv;
 import static java.nio.file.Files.walkFileTree;
 import static java.util.Arrays.asList;
 import static java.util.concurrent.Executors.newSingleThreadExecutor;
-import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static javax.swing.SwingUtilities.invokeLater;
 
 import java.io.BufferedReader;
@@ -161,43 +159,6 @@ public abstract class Main {
 		return file.getName().endsWith(",v") && !isBinary(file);
 	}
 
-	/**
-	 * @param decoder
-	 * @param file
-	 */
-	static void processFile(final Decoder decoder, final File file) {
-		if (!isVersionedTextFile(file)) {
-			/*
-			 * Skip binary files.
-			 *
-			 * We don't know whether files not managed by CVS
-			 * are text or binary, so not doing any conversion.
-			 */
-			return;
-		}
-
-		try {
-			/*
-			 * Encoding used when reading files.
-			 * Can be any 8-bit encoding.
-			 */
-			final String encoding = "ISO-8859-1";
-			try (final BufferedReader in = new BufferedReader(new InputStreamReader(new FileInputStream(file), encoding))) {
-				String line;
-				int lineNumber = 0;
-				while ((line = in.readLine()) != null) {
-					decoder.decode(line.getBytes(encoding), file, ++lineNumber);
-				}
-			}
-		} catch (final IOException ioe) {
-			/*
-			 * Fatal.
-			 */
-			ioe.printStackTrace();
-			System.exit(0);
-		}
-	}
-
 	public static long countTextFiles(final File directory) throws IOException {
 		final LongAdder textFileCount = new LongAdder();
 
@@ -221,28 +182,6 @@ public abstract class Main {
 		});
 
 		return textFileCount.longValue();
-	}
-
-	/**
-	 * @param decoder
-	 * @param cvsroot
-	 * @throws IOException
-	 */
-	static void processDirectory(final Decoder decoder, final String cvsroot) throws IOException {
-		walkFileTree(toFile(cvsroot).toPath(), new SimpleFileVisitor<Path>() {
-			/**
-			 * @see SimpleFileVisitor#visitFile(Object, BasicFileAttributes)
-			 */
-			@Override
-			public FileVisitResult visitFile(final Path file,
-					final BasicFileAttributes attrs)
-			throws IOException {
-				if (attrs.isRegularFile()) {
-					processFile(decoder, file.toFile());
-				}
-				return super.visitFile(file, attrs);
-			}
-		});
 	}
 
 	/**
@@ -307,12 +246,10 @@ public abstract class Main {
 		final InteractiveDisambiguator disambiguator = new InteractiveDisambiguator(DECODERS);
 		final Decoder decoder = new Decoder(DECODERS, dictionary, disambiguator);
 
-		final JFrame frame = MainFrameFactory.newInstance(cvsroot, tableModel, backgroundWorker, () -> {
-			final long t0 = currentTimeMillis();
-			processDirectory(decoder, cvsroot);
-			final long t1 = currentTimeMillis();
-			return "Completed in " + MILLISECONDS.toSeconds(t1 - t0) + " second(s).";
-		});
+		final JFrame frame = MainFrameFactory.newInstance(cvsroot,
+				tableModel,
+				backgroundWorker,
+				new FileProcessor(decoder, cvsroot));
 		disambiguator.setParent(frame);
 		frame.pack();
 		frame.setVisible(true);

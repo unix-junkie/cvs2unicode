@@ -29,7 +29,6 @@ import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
 import java.io.File;
 import java.io.IOException;
-import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 
 import javax.swing.JButton;
@@ -43,6 +42,9 @@ import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.JTextField;
 import javax.swing.table.TableModel;
+
+import com.github.unix_junkie.cvs2unicode.FileProcessedListener;
+import com.github.unix_junkie.cvs2unicode.FileProcessor;
 
 /**
  * @author Andrew ``Bass'' Shcheglov &lt;mailto:andrewbass@gmail.com&gt;
@@ -64,13 +66,13 @@ public final class MainFrameFactory {
 	 * @param cvsRoot
 	 * @param tableModel
 	 * @param backgroundWorker
-	 * @param work
+	 * @param processor
 	 * @wbp.parser.entryPoint
 	 */
 	public static JFrame newInstance(final String cvsRoot,
 			final TableModel tableModel,
 			final ExecutorService backgroundWorker,
-			final Callable<String> work) {
+			final FileProcessor processor) {
 		final JMenuBar menuBar = new JMenuBar();
 		menuBar.add(new JMenu("File"));
 		menuBar.add(new JMenu("Edit"));
@@ -129,7 +131,7 @@ public final class MainFrameFactory {
 				final long t1 = currentTimeMillis();
 				invokeLater(() -> {
 					progressBar.setMaximum(textFileCount > Integer.MAX_VALUE ? Integer.MAX_VALUE : (int) textFileCount);
-					progressBar.setString(progressBar.getValue() + "/" + progressBar.getMaximum());
+					setProgressBarValue(progressBar, 0);
 					statusBar.setText("Found " + textFileCount + " versioned text file(s) in " + (t1 - t0) + " millisecond(s).");
 				});
 			} catch (final IOException ioe) {
@@ -142,15 +144,16 @@ public final class MainFrameFactory {
 		startButton.setText("Convert CVS Repository");
 		startButton.addActionListener(e -> {
 			startButton.setEnabled(false);
-			progressBar.setIndeterminate(true);
 			setMenuBarEnabled(menuBar, false);
 			setExitOptionEnabled(mainFrame, false);
+			setProgressBarValue(progressBar, 0);
 			statusBar.setText("Busy...");
 			backgroundWorker.submit(() -> {
-				final String message = callSafe(work);
+				final String message = processDirectorySafe(processor, () -> invokeLater(() -> {
+					setProgressBarValue(progressBar, progressBar.getValue() + 1);
+				}));
 				invokeLater(() -> {
 					startButton.setEnabled(true);
-					progressBar.setIndeterminate(false);
 					setMenuBarEnabled(menuBar, true);
 					setExitOptionEnabled(mainFrame, true);
 					statusBar.setText(message);
@@ -232,15 +235,21 @@ public final class MainFrameFactory {
 		}
 	}
 
+	static void setProgressBarValue(final JProgressBar progressBar, final int value) {
+		progressBar.setValue(value);
+		progressBar.setString(value + "/" + progressBar.getMaximum());
+	}
+
 	/**
-	 * @param work
+	 * @param processor
+	 * @param l
 	 */
-	static String callSafe(final Callable<String> work) {
+	static String processDirectorySafe(final FileProcessor processor, final FileProcessedListener l) {
 		try {
-			return work.call();
-		} catch (final Exception e) {
-			e.printStackTrace();
-			return e.getMessage();
+			return processor.processDirectory(l);
+		} catch (final IOException ioe) {
+			ioe.printStackTrace();
+			return ioe.getMessage();
 		}
 	}
 }
