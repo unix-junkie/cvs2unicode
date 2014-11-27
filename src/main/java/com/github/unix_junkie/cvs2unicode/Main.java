@@ -238,7 +238,17 @@ public abstract class Main {
 
 		final DefaultTableModel tableModel = new DefaultTableModel(
 				new Vector<>(),
-				new Vector<>(asList("Word", "File", "Line", "Encoding")));
+				new Vector<>(asList("Word", "File", "Line", "Encoding"))) {
+			private static final long serialVersionUID = 4182081799950235108L;
+
+			/**
+			 * @see DefaultTableModel#isCellEditable(int, int)
+			 */
+			@Override
+			public boolean isCellEditable(final int row, final int column) {
+				return false;
+			}
+		};
 
 		final Dictionary dictionary = new Dictionary((word, file, lineNumber, decoder) -> invokeLater(() -> {
 			tableModel.addRow(new String[] {word, file.getName(), String.valueOf(lineNumber), decoder.charset()});
