@@ -68,11 +68,11 @@ public final class MainFrameFactory {
 			final TableModel tableModel,
 			final ExecutorService backgroundWorker,
 			final Callable<Void> work) {
-		final JMenuBar menubar = new JMenuBar();
-		menubar.add(new JMenu("File"));
-		menubar.add(new JMenu("Edit"));
-		menubar.add(createHorizontalGlue());
-		menubar.add(new JMenu("Help"));
+		final JMenuBar menuBar = new JMenuBar();
+		menuBar.add(new JMenu("File"));
+		menuBar.add(new JMenu("Edit"));
+		menuBar.add(createHorizontalGlue());
+		menuBar.add(new JMenu("Help"));
 
 
 		final JPanel contentPane = new JPanel(new GridBagLayout());
@@ -114,6 +114,7 @@ public final class MainFrameFactory {
 		startButton.addActionListener(e -> {
 			startButton.setEnabled(false);
 			progressBar.setIndeterminate(true);
+			setMenuBarEnabled(menuBar, false);
 			setExitOptionEnabled(mainFrame, false);
 			backgroundWorker.submit(() -> {
 				try {
@@ -135,6 +136,7 @@ public final class MainFrameFactory {
 				invokeLater(() -> {
 					startButton.setEnabled(true);
 					progressBar.setIndeterminate(false);
+					setMenuBarEnabled(menuBar, true);
 					setExitOptionEnabled(mainFrame, true);
 				});
 			});
@@ -181,7 +183,7 @@ public final class MainFrameFactory {
 		mainFrame.setPreferredSize(new Dimension(640, 900));
 		mainFrame.setResizable(true);
 		mainFrame.setDefaultCloseOperation(EXIT_ON_CLOSE);
-		mainFrame.setJMenuBar(menubar);
+		mainFrame.setJMenuBar(menuBar);
 		mainFrame.getContentPane().add(contentPane);
 
 		return mainFrame;
@@ -194,6 +196,15 @@ public final class MainFrameFactory {
 		} else {
 			frame.setDefaultCloseOperation(DO_NOTHING_ON_CLOSE);
 			frame.addWindowListener(WINDOW_CLOSING_LISTENER);
+		}
+	}
+
+	static void setMenuBarEnabled(final JMenuBar menuBar, final boolean enabled) {
+		for (int i = 0, n = menuBar.getMenuCount(); i < n; i++) {
+			final JMenu menu = menuBar.getMenu(i);
+			if (menu != null) {
+				menu.setEnabled(enabled);
+			}
 		}
 	}
 }
