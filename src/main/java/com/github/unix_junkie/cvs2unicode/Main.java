@@ -3,7 +3,9 @@
  */
 package com.github.unix_junkie.cvs2unicode;
 
+import static java.lang.System.currentTimeMillis;
 import static java.lang.System.getenv;
+import static java.nio.file.Files.walkFileTree;
 import static java.util.Arrays.asList;
 import static java.util.concurrent.Executors.newSingleThreadExecutor;
 import static javax.swing.SwingUtilities.invokeLater;
@@ -13,8 +15,13 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.nio.file.FileVisitResult;
+import java.nio.file.Path;
+import java.nio.file.SimpleFileVisitor;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.util.Vector;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.atomic.LongAdder;
 
 import javax.swing.JDialog;
 import javax.swing.JFrame;
@@ -146,20 +153,24 @@ public abstract class Main {
 	}
 
 	/**
+	 * @param file
+	 * @return {@code true} if a file is a versioned (i.e. managed by CVS) plain-text one.
+	 */
+	static boolean isVersionedTextFile(final File file) {
+		return file.getName().endsWith(",v") && !isBinary(file);
+	}
+
+	/**
 	 * @param decoder
 	 * @param file
 	 */
-	private static void processFile(final Decoder decoder, final File file) {
-		if (!file.getName().endsWith(",v")) {
-			/*
-			 * We don't know whether files not managed by CVS
-			 * are text or binary, so not doing any conversion.
-			 */
-			return;
-		}
-		if (isBinary(file)) {
+	static void processFile(final Decoder decoder, final File file) {
+		if (!isVersionedTextFile(file)) {
 			/*
 			 * Skip binary files.
+			 *
+			 * We don't know whether files not managed by CVS
+			 * are text or binary, so not doing any conversion.
 			 */
 			return;
 		}
@@ -186,18 +197,51 @@ public abstract class Main {
 		}
 	}
 
+	static long countTextFiles(final File directory) throws IOException {
+		final LongAdder textFileCount = new LongAdder();
+
+		/*
+		 * We're not following any links here.
+		 * Interested in regular files only.
+		 */
+		walkFileTree(directory.toPath(), new SimpleFileVisitor<Path>() {
+			/**
+			 * @see SimpleFileVisitor#visitFile(Object, BasicFileAttributes)
+			 */
+			@Override
+			public FileVisitResult visitFile(final Path file,
+					final BasicFileAttributes attrs)
+			throws IOException {
+				if (attrs.isRegularFile() && isVersionedTextFile(file.toFile())) {
+					textFileCount.increment();
+				}
+				return super.visitFile(file, attrs);
+			}
+		});
+
+		return textFileCount.longValue();
+	}
+
 	/**
 	 * @param decoder
 	 * @param directory
+	 * @throws IOException
 	 */
-	static void processDirectory(final Decoder decoder, final File directory) {
-		for (final File file : directory.listFiles()) {
-			if (file.isFile()) {
-				processFile(decoder, file);
-			} else if (file.isDirectory()) {
-				processDirectory(decoder, file);
+	static void processDirectory(final Decoder decoder, final File directory) throws IOException {
+		walkFileTree(directory.toPath(), new SimpleFileVisitor<Path>() {
+			/**
+			 * @see SimpleFileVisitor#visitFile(Object, BasicFileAttributes)
+			 */
+			@Override
+			public FileVisitResult visitFile(final Path file,
+					final BasicFileAttributes attrs)
+			throws IOException {
+				if (attrs.isRegularFile()) {
+					processFile(decoder, file.toFile());
+				}
+				return super.visitFile(file, attrs);
 			}
-		}
+		});
 	}
 
 	/**
@@ -258,6 +302,14 @@ public abstract class Main {
 		final Decoder decoder = new Decoder(DECODERS, dictionary, disambiguator);
 
 		final JFrame frame = MainFrameFactory.newInstance(cvsroot, tableModel, backgroundWorker, () -> {
+			final long t0 = currentTimeMillis();
+			long textFileCount = -1;
+			try {
+				textFileCount = countTextFiles(localCvsRoot);
+			} finally {
+				final long t1 = currentTimeMillis();
+				System.out.println("Found " + textFileCount + " versioned text file(s) in " + (t1 - t0) + " millisecond(s).");
+			}
 			processDirectory(decoder, localCvsRoot);
 			return null;
 		});
