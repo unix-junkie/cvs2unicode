@@ -10,6 +10,7 @@ import static java.awt.GridBagConstraints.NORTHWEST;
 import static java.awt.GridBagConstraints.RELATIVE;
 import static java.awt.GridBagConstraints.REMAINDER;
 import static java.awt.GridBagConstraints.WEST;
+import static java.lang.System.getProperty;
 import static java.lang.System.getenv;
 import static javax.swing.BorderFactory.createBevelBorder;
 import static javax.swing.border.BevelBorder.LOWERED;
@@ -183,8 +184,7 @@ final class Message extends JPanel {
 
 		this.file = file;
 
-		final String path = file.getPath();
-		final String rcsFileRelativePath = path.startsWith(LOCAL_CVSROOT_PATH) ? path.substring(LOCAL_CVSROOT_PATH.length()) : path;
+		final String rcsFileRelativePath = getRcsFileRelativePath(file);
 		this.fileTextField.setText(rcsFileRelativePath.endsWith(",v") ? rcsFileRelativePath.substring(0, rcsFileRelativePath.length() - 2) : rcsFileRelativePath);
 	}
 
@@ -242,5 +242,14 @@ final class Message extends JPanel {
 			 */
 			return "";
 		}
+	}
+
+	/**
+	 * @param file
+	 */
+	private static String getRcsFileRelativePath(final File file) {
+		final String path = file.getPath();
+		final String rcsFileRelativePath = path.startsWith(LOCAL_CVSROOT_PATH) ? path.substring(LOCAL_CVSROOT_PATH.length()) : path;
+		return getProperty("os.name").startsWith("Windows") ? rcsFileRelativePath.replace('\\', '/') : rcsFileRelativePath;
 	}
 }
