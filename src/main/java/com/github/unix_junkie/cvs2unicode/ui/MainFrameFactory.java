@@ -3,13 +3,14 @@
  */
 package com.github.unix_junkie.cvs2unicode.ui;
 
+import static com.github.unix_junkie.cvs2unicode.Main.countTextFiles;
+import static com.github.unix_junkie.cvs2unicode.Main.toFile;
 import static java.awt.GridBagConstraints.BOTH;
 import static java.awt.GridBagConstraints.EAST;
 import static java.awt.GridBagConstraints.HORIZONTAL;
 import static java.awt.GridBagConstraints.RELATIVE;
 import static java.awt.GridBagConstraints.REMAINDER;
 import static java.lang.System.currentTimeMillis;
-import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static javax.swing.BorderFactory.createBevelBorder;
 import static javax.swing.Box.createHorizontalGlue;
 import static javax.swing.JFrame.EXIT_ON_CLOSE;
@@ -26,6 +27,8 @@ import java.awt.Insets;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
+import java.io.File;
+import java.io.IOException;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 
@@ -67,7 +70,7 @@ public final class MainFrameFactory {
 	public static JFrame newInstance(final String cvsRoot,
 			final TableModel tableModel,
 			final ExecutorService backgroundWorker,
-			final Callable<Void> work) {
+			final Callable<String> work) {
 		final JMenuBar menuBar = new JMenuBar();
 		menuBar.add(new JMenu("File"));
 		menuBar.add(new JMenu("Edit"));
@@ -104,10 +107,36 @@ public final class MainFrameFactory {
 
 
 		final JProgressBar progressBar = new JProgressBar();
+		progressBar.setValue(0);
+		progressBar.setStringPainted(true);
+
+		final JFrame mainFrame = new JFrame();
 
 		final JLabel statusBar = new JLabel();
 
-		final JFrame mainFrame = new JFrame();
+		backgroundWorker.submit(() -> {
+			final long t0 = currentTimeMillis();
+			final File localCvsRoot;
+			try {
+				localCvsRoot = toFile(cvsRoot);
+			} catch (final IOException ioe) {
+				showMessageDialog(mainFrame, ioe.getMessage());
+				System.exit(0);
+				return;
+			}
+			try {
+				final long textFileCount = countTextFiles(localCvsRoot);
+				final long t1 = currentTimeMillis();
+				invokeLater(() -> {
+					progressBar.setMaximum(textFileCount > Integer.MAX_VALUE ? Integer.MAX_VALUE : (int) textFileCount);
+					progressBar.setString(progressBar.getValue() + "/" + progressBar.getMaximum());
+					statusBar.setText("Found " + textFileCount + " versioned text file(s) in " + (t1 - t0) + " millisecond(s).");
+				});
+			} catch (final IOException ioe) {
+				ioe.printStackTrace();
+				invokeLater(() -> statusBar.setText(ioe.getMessage()));
+			}
+		});
 
 		final JButton startButton = new JButton();
 		startButton.setText("Convert CVS Repository");
@@ -116,28 +145,15 @@ public final class MainFrameFactory {
 			progressBar.setIndeterminate(true);
 			setMenuBarEnabled(menuBar, false);
 			setExitOptionEnabled(mainFrame, false);
+			statusBar.setText("Busy...");
 			backgroundWorker.submit(() -> {
-				try {
-					final long t0 = currentTimeMillis();
-					statusBar.setText("Busy...");
-					work.call();
-					final long t1 = currentTimeMillis();
-					statusBar.setText("Completed in " + MILLISECONDS.toSeconds(t1 - t0) + " second(s).");
-				} catch (final InterruptedException ie) {
-					/*
-					 * Re-set the interrupted state
-					 */
-					Thread.currentThread().interrupt();
-					statusBar.setText("Interrupted.");
-				} catch (final Exception ex) {
-					ex.printStackTrace();
-					statusBar.setText(ex.getMessage());
-				}
+				final String message = callSafe(work);
 				invokeLater(() -> {
 					startButton.setEnabled(true);
 					progressBar.setIndeterminate(false);
 					setMenuBarEnabled(menuBar, true);
 					setExitOptionEnabled(mainFrame, true);
+					statusBar.setText(message);
 				});
 			});
 		});
@@ -189,6 +205,10 @@ public final class MainFrameFactory {
 		return mainFrame;
 	}
 
+	/**
+	 * @param frame
+	 * @param enabled
+	 */
 	static void setExitOptionEnabled(final JFrame frame, final boolean enabled) {
 		if (enabled) {
 			frame.setDefaultCloseOperation(EXIT_ON_CLOSE);
@@ -199,12 +219,28 @@ public final class MainFrameFactory {
 		}
 	}
 
+	/**
+	 * @param menuBar
+	 * @param enabled
+	 */
 	static void setMenuBarEnabled(final JMenuBar menuBar, final boolean enabled) {
 		for (int i = 0, n = menuBar.getMenuCount(); i < n; i++) {
 			final JMenu menu = menuBar.getMenu(i);
 			if (menu != null) {
 				menu.setEnabled(enabled);
 			}
+		}
+	}
+
+	/**
+	 * @param work
+	 */
+	static String callSafe(final Callable<String> work) {
+		try {
+			return work.call();
+		} catch (final Exception e) {
+			e.printStackTrace();
+			return e.getMessage();
 		}
 	}
 }

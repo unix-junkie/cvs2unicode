@@ -8,6 +8,7 @@ import static java.lang.System.getenv;
 import static java.nio.file.Files.walkFileTree;
 import static java.util.Arrays.asList;
 import static java.util.concurrent.Executors.newSingleThreadExecutor;
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static javax.swing.SwingUtilities.invokeLater;
 
 import java.io.BufferedReader;
@@ -197,7 +198,7 @@ public abstract class Main {
 		}
 	}
 
-	static long countTextFiles(final File directory) throws IOException {
+	public static long countTextFiles(final File directory) throws IOException {
 		final LongAdder textFileCount = new LongAdder();
 
 		/*
@@ -224,11 +225,11 @@ public abstract class Main {
 
 	/**
 	 * @param decoder
-	 * @param directory
+	 * @param cvsroot
 	 * @throws IOException
 	 */
-	static void processDirectory(final Decoder decoder, final File directory) throws IOException {
-		walkFileTree(directory.toPath(), new SimpleFileVisitor<Path>() {
+	static void processDirectory(final Decoder decoder, final String cvsroot) throws IOException {
+		walkFileTree(toFile(cvsroot).toPath(), new SimpleFileVisitor<Path>() {
 			/**
 			 * @see SimpleFileVisitor#visitFile(Object, BasicFileAttributes)
 			 */
@@ -245,29 +246,34 @@ public abstract class Main {
 	}
 
 	/**
-	 * @param args
+	 * @param cvsroot
+	 * @throws IOException
 	 */
-	public static void main(final String args[]) {
-		final String cvsroot = getenv("CVSROOT");
+	public static File toFile(final String cvsroot) throws IOException {
 		if (cvsroot == null) {
-			System.out.println("CVSROOT is undefined; exiting...");
-			return;
+			throw new IOException("CVSROOT is undefined; exiting...");
 		}
 
 		if (!cvsroot.matches("^\\:local\\:.*$")) {
-			System.out.println("Only :local: scheme is supported; exiting...");
-			return;
+			throw new IOException("Only :local: scheme is supported; exiting...");
 		}
 
 		final File localCvsRoot = new File(cvsroot.substring(":local:".length()));
 		if (!localCvsRoot.exists()) {
-			System.out.println("No such file or directory: " + localCvsRoot);
-			return;
+			throw new IOException("No such file or directory: " + localCvsRoot);
 		}
 		if (!localCvsRoot.isDirectory()) {
-			System.out.println("Not a directory: " + localCvsRoot);
-			return;
+			throw new IOException("Not a directory: " + localCvsRoot);
 		}
+
+		return localCvsRoot;
+	}
+
+	/**
+	 * @param args
+	 */
+	public static void main(final String args[]) {
+		final String cvsroot = getenv("CVSROOT");
 
 		final ExecutorService backgroundWorker = newSingleThreadExecutor();
 
@@ -298,20 +304,14 @@ public abstract class Main {
 			tableModel.addRow(new String[] {word, file.getName(), String.valueOf(lineNumber), decoder.charset()});
 			System.out.println(word);
 		}));
-		final InteractiveDisambiguator disambiguator = new InteractiveDisambiguator(DECODERS, localCvsRoot);
+		final InteractiveDisambiguator disambiguator = new InteractiveDisambiguator(DECODERS);
 		final Decoder decoder = new Decoder(DECODERS, dictionary, disambiguator);
 
 		final JFrame frame = MainFrameFactory.newInstance(cvsroot, tableModel, backgroundWorker, () -> {
 			final long t0 = currentTimeMillis();
-			long textFileCount = -1;
-			try {
-				textFileCount = countTextFiles(localCvsRoot);
-			} finally {
-				final long t1 = currentTimeMillis();
-				System.out.println("Found " + textFileCount + " versioned text file(s) in " + (t1 - t0) + " millisecond(s).");
-			}
-			processDirectory(decoder, localCvsRoot);
-			return null;
+			processDirectory(decoder, cvsroot);
+			final long t1 = currentTimeMillis();
+			return "Completed in " + MILLISECONDS.toSeconds(t1 - t0) + " second(s).";
 		});
 		disambiguator.setParent(frame);
 		frame.pack();

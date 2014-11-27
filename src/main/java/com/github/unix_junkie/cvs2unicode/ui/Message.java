@@ -3,12 +3,14 @@
  */
 package com.github.unix_junkie.cvs2unicode.ui;
 
+import static com.github.unix_junkie.cvs2unicode.Main.toFile;
 import static java.awt.GridBagConstraints.BOTH;
 import static java.awt.GridBagConstraints.HORIZONTAL;
 import static java.awt.GridBagConstraints.NORTHWEST;
 import static java.awt.GridBagConstraints.RELATIVE;
 import static java.awt.GridBagConstraints.REMAINDER;
 import static java.awt.GridBagConstraints.WEST;
+import static java.lang.System.getenv;
 import static javax.swing.BorderFactory.createBevelBorder;
 import static javax.swing.border.BevelBorder.LOWERED;
 
@@ -44,8 +46,8 @@ final class Message extends JPanel {
 
 	static final EditorProvider EDITOR = new VimFactory().newEditor();
 
+	private static final String LOCAL_CVSROOT_PATH = getLocalCvsrootPath();
 
-	private final File localCvsRoot;
 
 	/**
 	 * Current file.
@@ -67,15 +69,7 @@ final class Message extends JPanel {
 
 	private final CardLayout encodingsPanelLayout = new CardLayout();
 
-	/**
-	 * @param localCvsRoot
-	 */
-	Message(final File localCvsRoot) {
-		if (localCvsRoot == null) {
-			throw new IllegalArgumentException();
-		}
-		this.localCvsRoot = localCvsRoot;
-
+	Message() {
 		/*
 		 * Layout:
 		 *
@@ -190,8 +184,7 @@ final class Message extends JPanel {
 		this.file = file;
 
 		final String path = file.getPath();
-		final String localCvsRootPath = this.localCvsRoot.getPath();
-		final String rcsFileRelativePath = path.startsWith(localCvsRootPath) ? path.substring(localCvsRootPath.length()) : path;
+		final String rcsFileRelativePath = path.startsWith(LOCAL_CVSROOT_PATH) ? path.substring(LOCAL_CVSROOT_PATH.length()) : path;
 		this.fileTextField.setText(rcsFileRelativePath.endsWith(",v") ? rcsFileRelativePath.substring(0, rcsFileRelativePath.length() - 2) : rcsFileRelativePath);
 	}
 
@@ -238,5 +231,16 @@ final class Message extends JPanel {
 				return previouslyUsedEncodings[index];
 			}
 		});
+	}
+
+	private static String getLocalCvsrootPath() {
+		try {
+			return toFile(getenv("CVSROOT")).getPath();
+		} catch (final IOException ignored) {
+			/*
+			 * Ignore - we're checking the same at application startup.
+			 */
+			return "";
+		}
 	}
 }

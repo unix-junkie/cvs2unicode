@@ -29,16 +29,13 @@ public final class InteractiveDisambiguator implements Disambiguator {
 	@Nullable
 	private volatile Component parent;
 
-	private final Message message;
+	private final Message message = new Message();
 
 	/**
 	 * @param decoders
-	 * @param localCvsRoot
 	 */
-	public InteractiveDisambiguator(final CharsetDecoder decoders[],
-			final File localCvsRoot) {
+	public InteractiveDisambiguator(final CharsetDecoder decoders[]) {
 		this.decoders = decoders.clone();
-		this.message = new Message(localCvsRoot);
 	}
 
 	boolean flag = true;
