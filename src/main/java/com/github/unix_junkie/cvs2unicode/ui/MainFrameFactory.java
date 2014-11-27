@@ -58,12 +58,14 @@ public final class MainFrameFactory {
 	}
 
 	/**
+	 * @param cvsRoot
 	 * @param tableModel
 	 * @param backgroundWorker
 	 * @param work
 	 * @wbp.parser.entryPoint
 	 */
-	public static JFrame newInstance(final TableModel tableModel,
+	public static JFrame newInstance(final String cvsRoot,
+			final TableModel tableModel,
 			final ExecutorService backgroundWorker,
 			final Callable<Void> work) {
 		final JMenuBar menubar = new JMenuBar();
@@ -91,6 +93,7 @@ public final class MainFrameFactory {
 		contentPane.add(cvsRootLabel, cvsRootLabelConstraints);
 
 		cvsRootTextField.setEditable(false);
+		cvsRootTextField.setText(cvsRoot);
 		cvsRootTextField.setToolTipText(cvsRootToolTipText);
 		final GridBagConstraints cvsRootTextFieldConstraints = new GridBagConstraints();
 		cvsRootTextFieldConstraints.gridwidth = REMAINDER;

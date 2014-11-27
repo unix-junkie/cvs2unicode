@@ -247,7 +247,7 @@ public abstract class Main {
 		final InteractiveDisambiguator disambiguator = new InteractiveDisambiguator(DECODERS, localCvsRoot);
 		final Decoder decoder = new Decoder(DECODERS, dictionary, disambiguator);
 
-		final JFrame frame = MainFrameFactory.newInstance(tableModel, backgroundWorker, () -> {
+		final JFrame frame = MainFrameFactory.newInstance(cvsroot, tableModel, backgroundWorker, () -> {
 			processDirectory(decoder, localCvsRoot);
 			return null;
 		});
