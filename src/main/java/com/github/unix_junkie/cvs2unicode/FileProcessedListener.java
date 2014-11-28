@@ -4,7 +4,7 @@
 package com.github.unix_junkie.cvs2unicode;
 
 /**
- * @author <a href = "mailto:andrey.shcheglov@hp.com">Andrey Shcheglov</a>
+ * @author Andrew ``Bass'' Shcheglov &lt;mailto:andrewbass@gmail.com&gt;
  */
 @FunctionalInterface
 public interface FileProcessedListener {

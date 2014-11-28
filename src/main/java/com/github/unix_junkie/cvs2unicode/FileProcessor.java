@@ -20,7 +20,7 @@ import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 
 /**
- * @author <a href = "mailto:andrey.shcheglov@hp.com">Andrey Shcheglov</a>
+ * @author Andrew ``Bass'' Shcheglov &lt;mailto:andrewbass@gmail.com&gt;
  */
 public final class FileProcessor {
 	final Decoder decoder;
