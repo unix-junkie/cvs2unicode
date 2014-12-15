@@ -58,20 +58,22 @@ public final class Decoder {
 			}
 
 			float maximumHitRating = -1.f;
-			CharsetDecoder decoder = this.decoders[0];
+			CharsetDecoder detectedDecoder = this.decoders[0];
 			for (final CharsetDecoder probableDecoder : this.decoders) {
 				final String decodedData = probableDecoder.decode(data);
 				final float hitRating = this.dictionary.hitRating(decodedData);
 				if (hitRating > maximumHitRating) {
 					maximumHitRating = hitRating;
-					decoder = probableDecoder;
+					detectedDecoder = probableDecoder;
 				}
 			}
 
-			final String decodedData = maximumHitRating == .0f
+			final boolean disambiguationRequired = maximumHitRating == .0f;
+			final DecodedToken decodedToken = disambiguationRequired
 					? this.disambiguator.decode(data, file, lineNumber)
-					: decoder.decode(data);
+					: new DecodedToken(detectedDecoder, data);
 
+			final String decodedData = decodedToken.getDecodedData();
 			final List<String> words = splitIntoWords(decodedData);
 			for (final String word : words) {
 				/*
@@ -81,7 +83,7 @@ public final class Decoder {
 				if (isAscii(word.getBytes("UTF-8"))) {
 					continue;
 				}
-				this.dictionary.add(word, file, lineNumber, decoder);
+				this.dictionary.add(word, file, lineNumber, decodedToken.getDecoder());
 			}
 
 			return decodedData;

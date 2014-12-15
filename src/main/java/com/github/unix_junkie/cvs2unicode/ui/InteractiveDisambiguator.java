@@ -18,6 +18,7 @@ import java.util.List;
 import javax.annotation.Nullable;
 
 import com.github.unix_junkie.cvs2unicode.CharsetDecoder;
+import com.github.unix_junkie.cvs2unicode.DecodedToken;
 import com.github.unix_junkie.cvs2unicode.Disambiguator;
 
 /**
@@ -44,12 +45,11 @@ public final class InteractiveDisambiguator implements Disambiguator {
 	 * @see Disambiguator#decode(byte[], File, int)
 	 */
 	@Override
-	public String decode(final byte data[], final File file, final int lineNumber) {
+	public DecodedToken decode(final byte data[], final File file, final int lineNumber) {
 		try {
 			final List<Option> options = new ArrayList<>();
 			for (final CharsetDecoder decoder : this.decoders) {
-				final String decodedData = decoder.decode(data);
-				options.add(new Option(decoder, decodedData));
+				options.add(new Option(decoder, data));
 			}
 			invokeLater(() -> {
 				this.message.setFile(file);
@@ -57,7 +57,7 @@ public final class InteractiveDisambiguator implements Disambiguator {
 				this.message.setPreviouslyUsedEncodings(this.flag ? new String[]{} : new String[]{"KOI8-R", "IBM866", "CP1251"}); // TBD
 				this.flag = !this.flag;
 			});
-			String line;
+			DecodedToken decodedToken;
 			do {
 				final Option option[] = new Option[1];
 				invokeAndWait(() -> {
@@ -69,10 +69,10 @@ public final class InteractiveDisambiguator implements Disambiguator {
 							options.toArray(),
 							null);
 				});
-				line = option[0] == null ? null : option[0].getText();
-			} while (line == null);
-			return line;
-		} catch (final UnsupportedEncodingException | InvocationTargetException | InterruptedException e) {
+				decodedToken = option[0];
+			} while (decodedToken == null);
+			return decodedToken;
+		} catch (final InvocationTargetException | InterruptedException e) {
 			/*
 			 * Never.
 			 */
@@ -106,22 +106,21 @@ public final class InteractiveDisambiguator implements Disambiguator {
 	/**
 	 * @author Andrew ``Bass'' Shcheglov &lt;mailto:andrewbass@gmail.com&gt;
 	 */
-	private static final class Option {
-		private final CharsetDecoder decoder;
-
-		private final String text;
-
+	private static final class Option extends DecodedToken {
 		/**
 		 * @param decoder
-		 * @param text
+		 * @param data
 		 */
-		Option(final CharsetDecoder decoder, final String text) {
-			this.decoder = decoder;
-			this.text = text;
+		Option(final CharsetDecoder decoder, final byte data[]) {
+			super(decoder, data);
 		}
 
-		String getText() {
-			return this.text;
+		private String toString(final String decodedData) {
+			return "<html><font face = \"Courier New\">" +
+					"<font color = \"#008000\">" + this.getDecoder().charset() + "</font>" +
+					": " +
+					"<font color = \"#000080\">" + escapeHtml(decodedData) + "</font>" +
+					"</font></html>";
 		}
 
 		/**
@@ -129,11 +128,15 @@ public final class InteractiveDisambiguator implements Disambiguator {
 		 */
 		@Override
 		public String toString() {
-			return "<html><font face = \"Courier New\">" +
-					"<font color = \"#008000\">" + this.decoder.charset() + "</font>" +
-					": " +
-					"<font color = \"#000080\">" + escapeHtml(this.getText()) + "</font>" +
-					"</font></html>";
+			try {
+				return this.toString(this.getDecodedData());
+			} catch (final UnsupportedEncodingException uee) {
+				/*
+				 * Never.
+				 */
+				uee.printStackTrace();
+				return this.toString(uee.getMessage());
+			}
 		}
 	}
 }

@@ -28,7 +28,7 @@ public final class DefaultDisambiguator implements Disambiguator {
 	 * @see Disambiguator#decode(byte[], File, int)
 	 */
 	@Override
-	public String decode(final byte data[], final File file, final int lineNumber) {
+	public DecodedToken decode(final byte data[], final File file, final int lineNumber) {
 		try {
 			for (final CharsetDecoder decoder : this.decoders) {
 				final String decodedData = decoder.decode(data);
