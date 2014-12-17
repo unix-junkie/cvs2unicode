@@ -10,8 +10,8 @@ import static javax.swing.SwingUtilities.invokeLater;
 
 import java.awt.Component;
 import java.io.File;
-import java.io.UnsupportedEncodingException;
 import java.lang.reflect.InvocationTargetException;
+import java.nio.charset.CharacterCodingException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -49,7 +49,7 @@ public final class InteractiveDisambiguator implements Disambiguator {
 		try {
 			final List<Option> options = new ArrayList<>();
 			for (final CharsetDecoder decoder : this.decoders) {
-				options.add(new Option(decoder, data));
+				options.add(new Option(data, decoder));
 			}
 			invokeLater(() -> {
 				this.message.setFile(file);
@@ -108,11 +108,11 @@ public final class InteractiveDisambiguator implements Disambiguator {
 	 */
 	private static final class Option extends DecodedToken {
 		/**
-		 * @param decoder
 		 * @param data
+		 * @param decoder
 		 */
-		Option(final CharsetDecoder decoder, final byte data[]) {
-			super(decoder, data);
+		Option(final byte data[], final CharsetDecoder decoder) {
+			super(data, decoder);
 		}
 
 		private String toString(final String decodedData) {
@@ -130,12 +130,12 @@ public final class InteractiveDisambiguator implements Disambiguator {
 		public String toString() {
 			try {
 				return this.toString(this.getDecodedData());
-			} catch (final UnsupportedEncodingException uee) {
+			} catch (final CharacterCodingException cce) {
 				/*
 				 * Never.
 				 */
-				uee.printStackTrace();
-				return this.toString(uee.getMessage());
+				cce.printStackTrace();
+				return this.toString(cce.getMessage());
 			}
 		}
 	}

@@ -3,7 +3,10 @@
  */
 package com.github.unix_junkie.cvs2unicode;
 
-import java.io.UnsupportedEncodingException;
+import java.nio.ByteBuffer;
+import java.nio.CharBuffer;
+import java.nio.charset.CharacterCodingException;
+import java.nio.charset.CharsetEncoder;
 
 /**
  * @author Andrew ``Bass'' Shcheglov &lt;mailto:andrewbass@gmail.com&gt;
@@ -11,10 +14,35 @@ import java.io.UnsupportedEncodingException;
 public interface CharsetDecoder {
 	/**
 	 * @param in
-	 * @throws UnsupportedEncodingException
+	 * @throws CharacterCodingException
+	 * @see #decode(ByteBuffer)
 	 * @see java.nio.charset.CharsetDecoder#decode(java.nio.ByteBuffer)
 	 */
-	String decode(final byte in[]) throws UnsupportedEncodingException;
+	String decode(final byte in[]) throws CharacterCodingException;
+
+	/**
+	 * @param in
+	 * @throws CharacterCodingException
+	 * @see #decode(byte[])
+	 * @see java.nio.charset.CharsetDecoder#decode(java.nio.ByteBuffer)
+	 */
+	default String decode(final ByteBuffer in) throws CharacterCodingException {
+		/*
+		 * Assume position == 0, limit == capacity and use an underlying
+		 * array. Otherwise, in a multi-threaded environment we would
+		 * need to either duplicate the buffer so that the position and
+		 * limit are owned by current thread only, or use
+		 * synchronization.
+		 */
+		return this.decode(in.array());
+	}
+
+	/**
+	 * @param in
+	 * @throws CharacterCodingException
+	 * @see CharsetEncoder#encode(CharBuffer)
+	 */
+	ByteBuffer encode(final String in) throws CharacterCodingException;
 
 	/**
 	 * @see java.nio.charset.CharsetDecoder#charset()

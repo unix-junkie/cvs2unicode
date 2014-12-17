@@ -3,24 +3,26 @@
  */
 package com.github.unix_junkie.cvs2unicode.cs;
 
-import static junit.framework.Assert.assertEquals;
+import static org.junit.Assert.assertEquals;
 
 import java.io.UnsupportedEncodingException;
+import java.nio.ByteBuffer;
+import java.nio.charset.CharacterCodingException;
 
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
 
 import com.github.unix_junkie.cvs2unicode.CharsetDecoder;
 
 /**
  * @author Andrew ``Bass'' Shcheglov &lt;mailto:andrewbass@gmail.com&gt;
  */
+@RunWith(JUnit4.class)
 public final class CharsetDecoderTestCase {
-	/**
-	 * @throws UnsupportedEncodingException
-	 */
 	@SuppressWarnings("static-method")
 	@Test
-	public void testUku() throws UnsupportedEncodingException {
+	public void testUku() throws CharacterCodingException {
 		final CharsetDecoder uku = new UKU();
 		final byte utf8Data[] = {
 				(byte) 0xd0, (byte) 0xbf, (byte) 0xe2, (byte) 0x96, (byte) 0x91, (byte) 0xd0, (byte) 0xbf, (byte) 0xe2, (byte) 0x96, (byte) 0x92, (byte) 0xd0, (byte) 0xbf, (byte) 0xe2, (byte) 0x96, (byte) 0x93, (byte) 0xd0,
@@ -48,12 +50,23 @@ public final class CharsetDecoderTestCase {
 		assertEquals("АБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯабвгдеёжзийклмнопрстуфхцчшщъыьэюя", uku.decode(utf8Data));
 	}
 
+	@SuppressWarnings("static-method")
+	@Test
+	public void testUkuSymmetry() throws CharacterCodingException {
+		final String s = "АБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯабвгдеёжзийклмнопрстуфхцчшщъыьэюя";
+		final CharsetDecoder uku = new UKU();
+		final ByteBuffer data = uku.encode(s);
+		assertEquals(s, uku.decode(data));
+		assertEquals(data, uku.encode(s).position(0));
+	}
+
 	/**
 	 * @throws UnsupportedEncodingException
+	 * @throws CharacterCodingException
 	 */
 	@SuppressWarnings("static-method")
 	@Test
-	public void testDosAsUnicode() throws UnsupportedEncodingException {
+	public void testDosAsUnicode() throws UnsupportedEncodingException, CharacterCodingException {
 		final CharsetDecoder dosAsUnicode = new DosAsUnicode();
 
 		final byte cyrillicAlphabetInCp866[] = {
@@ -77,5 +90,33 @@ public final class CharsetDecoderTestCase {
 		assertEquals("��щее ���яни� ������", dosAsUnicode.decode("Общее состояние колодца".getBytes("IBM866")));
 		assertEquals("������� ����� ���", dosAsUnicode.decode("Емкость блока труб".getBytes("IBM866")));
 		assertEquals("��сло ������� � �сно����� �����", dosAsUnicode.decode("Число каналов в основания блока".getBytes("IBM866")));
+	}
+
+	@SuppressWarnings("static-method")
+	@Test
+	public void testDosAsUnicodeSymmetry() throws CharacterCodingException {
+		final CharsetDecoder dosAsUnicode = new DosAsUnicode();
+
+		final ByteBuffer buf = dosAsUnicode.encode("АБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯабвгдеёжзийклмнопрстуфхцчшщъыьэюя");
+		final byte data[] = new byte[3];
+		buf.get(data, 0, 3);
+		buf.position(0);
+		assertEquals('�', new UTF_8().decode(data).charAt(0));
+
+		assertEquals(buf.limit(), buf.capacity());
+
+		assertEquals("���������������������������������������ёжзи�����������������������", dosAsUnicode.decode(buf));
+		assertEquals("����", dosAsUnicode.decode(dosAsUnicode.encode("Цвет")));
+		assertEquals("���щин� �����", dosAsUnicode.decode(dosAsUnicode.encode("Толщина линии")));
+		assertEquals("�тил� �����", dosAsUnicode.decode(dosAsUnicode.encode("Стиль линии")));
+		assertEquals("���соб укл���� ������", dosAsUnicode.decode(dosAsUnicode.encode("Способ укладки кабеля")));
+		assertEquals("��уби�� ���������", dosAsUnicode.decode(dosAsUnicode.encode("Глубина заложения")));
+		assertEquals("������� ����", dosAsUnicode.decode(dosAsUnicode.encode("Диаметр трубы")));
+		assertEquals("���риа�", dosAsUnicode.decode(dosAsUnicode.encode("Материал")));
+		assertEquals("���соб укл���� ����", dosAsUnicode.decode(dosAsUnicode.encode("Способ укладки трубы")));
+		assertEquals("���ужи����� ������", dosAsUnicode.decode(dosAsUnicode.encode("Обслуживание колодца")));
+		assertEquals("��щее ���яни� ������", dosAsUnicode.decode(dosAsUnicode.encode("Общее состояние колодца")));
+		assertEquals("������� ����� ���", dosAsUnicode.decode(dosAsUnicode.encode("Емкость блока труб")));
+		assertEquals("��сло ������� � �сно����� �����", dosAsUnicode.decode(dosAsUnicode.encode("Число каналов в основания блока")));
 	}
 }

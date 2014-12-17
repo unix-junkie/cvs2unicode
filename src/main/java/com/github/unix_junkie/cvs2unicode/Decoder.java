@@ -4,10 +4,10 @@
 package com.github.unix_junkie.cvs2unicode;
 
 import static com.github.unix_junkie.cvs2unicode.Utilities.isAscii;
-import static com.github.unix_junkie.cvs2unicode.Utilities.splitIntoWords;
 
 import java.io.File;
-import java.io.UnsupportedEncodingException;
+import java.nio.charset.CharacterCodingException;
+import java.nio.charset.Charset;
 import java.util.List;
 
 /**
@@ -54,7 +54,7 @@ public final class Decoder {
 				 * If the line of text is pure ASCII,
 				 * the dictionary is not updated.
 				 */
-				return new String(data, "US-ASCII");
+				return new String(data, Charset.forName("US-ASCII"));
 			}
 
 			float maximumHitRating = -1.f;
@@ -71,27 +71,26 @@ public final class Decoder {
 			final boolean disambiguationRequired = maximumHitRating == .0f;
 			final DecodedToken decodedToken = disambiguationRequired
 					? this.disambiguator.decode(data, file, lineNumber)
-					: new DecodedToken(detectedDecoder, data);
+					: new DecodedToken(data, detectedDecoder);
 
-			final String decodedData = decodedToken.getDecodedData();
-			final List<String> words = splitIntoWords(decodedData);
-			for (final String word : words) {
+			final List<DecodedToken> words = decodedToken.splitIntoWords();
+			for (final DecodedToken word : words) {
 				/*
 				 * Don't update the dictionary with the words that
 				 * fit into the ASCII table.
 				 */
-				if (isAscii(word.getBytes("UTF-8"))) {
+				if (word.isAscii()) {
 					continue;
 				}
-				this.dictionary.add(word, file, lineNumber, decodedToken.getDecoder());
+				this.dictionary.add(word, file, lineNumber);
 			}
 
-			return decodedData;
-		} catch (final UnsupportedEncodingException uee) {
+			return decodedToken.getDecodedData();
+		} catch (final CharacterCodingException cce) {
 			/*
 			 * Never.
 			 */
-			uee.printStackTrace();
+			cce.printStackTrace();
 			return null;
 		}
 	}

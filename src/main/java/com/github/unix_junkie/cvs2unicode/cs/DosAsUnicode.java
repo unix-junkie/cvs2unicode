@@ -3,7 +3,8 @@
  */
 package com.github.unix_junkie.cvs2unicode.cs;
 
-import java.io.UnsupportedEncodingException;
+import java.nio.ByteBuffer;
+import java.nio.charset.CharacterCodingException;
 
 import com.github.unix_junkie.cvs2unicode.CharsetDecoder;
 
@@ -14,12 +15,16 @@ import com.github.unix_junkie.cvs2unicode.CharsetDecoder;
  * @author Andrew ``Bass'' Shcheglov &lt;mailto:andrewbass@gmail.com&gt;
  */
 public final class DosAsUnicode implements CharsetDecoder {
+	private static final CharsetDecoder UNICODE = new UTF_8();
+
+	private static final CharsetDecoder DOS = new IBM866();
+
 	/**
 	 * @see CharsetDecoder#decode(byte[])
 	 */
 	@Override
-	public String decode(final byte in[]) throws UnsupportedEncodingException {
-		final String s = new String(in, "UTF-8");
+	public String decode(final byte in[]) throws CharacterCodingException {
+		final String s = UNICODE.decode(in);
 		final StringBuilder accumulator = new StringBuilder();
 		final StringBuilder result = new StringBuilder();
 		for (int i = 0, n = s.length(); i < n; i++) {
@@ -28,7 +33,7 @@ public final class DosAsUnicode implements CharsetDecoder {
 				/*
 				 * Unicode replacement character.
 				 */
-				final String accumulatorContents = new String(accumulator.toString().getBytes("UTF-8"), "IBM866");
+				final String accumulatorContents = DOS.decode(UNICODE.encode(accumulator.toString()));
 				result.append(accumulatorContents);
 				result.append(c);
 				accumulator.setLength(0);
@@ -37,10 +42,20 @@ public final class DosAsUnicode implements CharsetDecoder {
 			}
 		}
 
-		final String accumulatorContents = new String(accumulator.toString().getBytes("UTF-8"), "IBM866");
+		final String accumulatorContents = DOS.decode(UNICODE.encode(accumulator.toString()));
 		result.append(accumulatorContents);
 
 		return result.toString();
+	}
+
+	/**
+	 * {@inheritDoc}
+	 *
+	 * @see CharsetDecoder#encode(String)
+	 */
+	@Override
+	public ByteBuffer encode(final String in) throws CharacterCodingException {
+		return UNICODE.encode(UNICODE.decode(DOS.encode(in).array()));
 	}
 
 	/**

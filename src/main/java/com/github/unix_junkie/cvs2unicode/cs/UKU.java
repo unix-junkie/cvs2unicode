@@ -3,7 +3,8 @@
  */
 package com.github.unix_junkie.cvs2unicode.cs;
 
-import java.io.UnsupportedEncodingException;
+import java.nio.ByteBuffer;
+import java.nio.charset.CharacterCodingException;
 
 import com.github.unix_junkie.cvs2unicode.CharsetDecoder;
 
@@ -21,12 +22,26 @@ import com.github.unix_junkie.cvs2unicode.CharsetDecoder;
  * @author Andrew ``Bass'' Shcheglov &lt;mailto:andrewbass@gmail.com&gt;
  */
 public final class UKU implements CharsetDecoder {
+	private static final CharsetDecoder UNICODE = new UTF_8();
+
+	private static final CharsetDecoder KOI = new KOI8_R();
+
 	/**
 	 * @see CharsetDecoder#decode(byte[])
 	 */
 	@Override
-	public String decode(final byte in[]) throws UnsupportedEncodingException {
-		return new String(new String(in, "UTF-8").getBytes("KOI8-R"), "UTF-8");
+	public String decode(final byte in[]) throws CharacterCodingException {
+		return UNICODE.decode(KOI.encode(UNICODE.decode(in)));
+	}
+
+	/**
+	 * {@inheritDoc}
+	 *
+	 * @see CharsetDecoder#encode(String)
+	 */
+	@Override
+	public ByteBuffer encode(final String in) throws CharacterCodingException {
+		return UNICODE.encode(KOI.decode(UNICODE.encode(in)));
 	}
 
 	/**

@@ -14,6 +14,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.nio.charset.CharacterCodingException;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Path;
 import java.nio.file.SimpleFileVisitor;
@@ -239,9 +240,15 @@ public abstract class Main {
 			}
 		};
 
-		final Dictionary dictionary = new Dictionary((word, file, lineNumber, decoder) -> invokeLater(() -> {
-			tableModel.addRow(new String[] {word, file.getName(), String.valueOf(lineNumber), decoder.charset()});
-			System.out.println(word);
+		final Dictionary dictionary = new Dictionary((word, file, lineNumber) -> invokeLater(() -> {
+			try {
+				tableModel.addRow(new String[] {word.getDecodedData().toLowerCase(), file.getName(), String.valueOf(lineNumber), word.getDecoder().charset()});
+			} catch (final CharacterCodingException cce) {
+				/*
+				 * Never.
+				 */
+				cce.printStackTrace();
+			}
 		}));
 		final InteractiveDisambiguator disambiguator = new InteractiveDisambiguator(DECODERS);
 		final Decoder decoder = new Decoder(DECODERS, dictionary, disambiguator);

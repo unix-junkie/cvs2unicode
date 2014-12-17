@@ -3,6 +3,8 @@
  */
 package com.github.unix_junkie.cvs2unicode.cs;
 
+import java.nio.charset.Charset;
+
 import com.github.unix_junkie.cvs2unicode.AbstractCharsetDecoder;
 
 /**
@@ -10,6 +12,6 @@ import com.github.unix_junkie.cvs2unicode.AbstractCharsetDecoder;
  */
 public final class IBM866 extends AbstractCharsetDecoder {
 	public IBM866() {
-		super("IBM866");
+		super(Charset.forName("IBM866"));
 	}
 }

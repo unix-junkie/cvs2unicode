@@ -19,8 +19,8 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.PrintStream;
 import java.io.UncheckedIOException;
+import java.nio.charset.CharacterCodingException;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -55,7 +55,13 @@ public final class Dictionary {
 
 	private final Set<Hunspell> analyzers = new LinkedHashSet<>();
 
-	private final SortedSet<String> userDictionary = new TreeSet<>();
+	private final Set<DecodedToken> userDictionary = new LinkedHashSet<>();
+
+	/**
+	 * The word cache which may be invalidated in case any item from
+	 * {@link #userDictionary} has its encoding changed.
+	 */
+	private final SortedSet<String> wordCache = new TreeSet<>();
 
 	private final DictionaryChangeListener changeListener;
 
@@ -77,27 +83,28 @@ public final class Dictionary {
 	}
 
 	/**
-	 * @param word
+	 * @param decodedToken the word or line of text along with its most probable encoding
 	 * @param file the file in which the {@code word} was seen first
 	 * @param lineNumber the line number within the [@code file} of the word's
 	 *                   first occurrence
-	 * @param decoder the most probable encoding of the current line within
-	 *        the {@code file} (specified by {@code lineNumber}).
+	 * @throws CharacterCodingException
 	 * @see DictionaryChangeListener#wordAdded
 	 */
-	public void add(final String word, final File file, final int lineNumber,
-			final CharsetDecoder decoder) {
-		if (this.changeListener != null && !this.contains(word)) {
-			this.changeListener.wordAdded(word.toLowerCase(), file, lineNumber, decoder);
+	public void add(final DecodedToken decodedToken, final File file, final int lineNumber)
+	throws CharacterCodingException {
+		if (this.changeListener != null && !this.contains(decodedToken)) {
+			this.changeListener.wordAdded(decodedToken, file, lineNumber);
 		}
-		this.add(word);
+		this.add(decodedToken);
 	}
 
 	/**
-	 * @param word
+	 * @param decodedToken
+	 * @throws CharacterCodingException
 	 */
-	public void add(final String word) {
-		this.userDictionary.add(word.toLowerCase());
+	private void add(final DecodedToken decodedToken) throws CharacterCodingException {
+		this.userDictionary.add(decodedToken);
+		this.wordCache.add(decodedToken.getDecodedData().toLowerCase());
 	}
 
 	/**
@@ -105,7 +112,15 @@ public final class Dictionary {
 	 */
 	public boolean contains(final String word) {
 		return this.analyzers.stream().anyMatch(hunspell -> hunspell.spell(word))
-				|| this.userDictionary.contains(word.toLowerCase());
+				|| this.wordCache.contains(word.toLowerCase());
+	}
+
+	/**
+	 * @param decodedToken
+	 * @throws CharacterCodingException
+	 */
+	private boolean contains(final DecodedToken decodedToken) throws CharacterCodingException {
+		return this.contains(decodedToken.getDecodedData());
 	}
 
 	/**
@@ -157,15 +172,6 @@ public final class Dictionary {
 		}
 
 		return (float) occurrences / length;
-	}
-
-	/**
-	 * @param out
-	 */
-	public void print(final PrintStream out) {
-		for (final String word : this.userDictionary) {
-			out.println(word);
-		}
 	}
 
 	/**
@@ -232,9 +238,24 @@ public final class Dictionary {
 						continue;
 					}
 
-					final int i = line.indexOf('/');
-					final String word = i == -1 ? line : line.substring(0, i);
-					this.add(word);
+					/*
+					 * Strip leading BOM in case file is a plain-text one.
+					 */
+					final String wordWithAffix = line.length() != 0 && line.charAt(0) == '\uFEFF' ? line.substring(1) : line;
+
+					/*
+					 * Strip hunspell affix information.
+					 */
+					final int i = wordWithAffix.indexOf('/');
+					final String word = i == -1 ? wordWithAffix : wordWithAffix.substring(0, i);
+					try {
+						this.add(new DecodedToken(word.toLowerCase()));
+					} catch (final CharacterCodingException cce) {
+						/*
+						 * Never.
+						 */
+						cce.printStackTrace();
+					}
 				}
 			}
 		} catch (final IOException ioe) {

@@ -3,6 +3,8 @@
  */
 package com.github.unix_junkie.cvs2unicode.cs;
 
+import java.nio.charset.Charset;
+
 import com.github.unix_junkie.cvs2unicode.AbstractCharsetDecoder;
 
 /**
@@ -10,6 +12,6 @@ import com.github.unix_junkie.cvs2unicode.AbstractCharsetDecoder;
  */
 public class KOI8_R extends AbstractCharsetDecoder {
 	public KOI8_R() {
-		super("KOI8-R");
+		super(Charset.forName("KOI8-R"));
 	}
 }

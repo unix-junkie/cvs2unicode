@@ -4,7 +4,7 @@
 package com.github.unix_junkie.cvs2unicode;
 
 import java.io.File;
-import java.io.UnsupportedEncodingException;
+import java.nio.charset.CharacterCodingException;
 
 /**
  * @author Andrew ``Bass'' Shcheglov &lt;mailto:andrewbass@gmail.com&gt;
@@ -35,11 +35,11 @@ public final class DefaultDisambiguator implements Disambiguator {
 				System.out.println("As " + decoder + " (hit rating " + this.dictionary.hitRating(decodedData) + "):\t" + decodedData);
 			}
 			return null;
-		} catch (final UnsupportedEncodingException uee) {
+		} catch (final CharacterCodingException cce) {
 			/*
 			 * Never.
 			 */
-			uee.printStackTrace();
+			cce.printStackTrace();
 			return null;
 		}
 	}

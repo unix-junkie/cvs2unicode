@@ -10,14 +10,11 @@ import java.io.File;
  */
 public interface DictionaryChangeListener {
 	/**
-	 * @param word the lower-case word prepresentation
+	 * @param decodedToken the word or line of text along with its most probable encoding
 	 * @param file the file in which the {@code word} was seen first
 	 * @param lineNumber the line number within the [@code file} of the word's
 	 *                   first occurrence
-	 * @param decoder the most probable encoding of the current line within
-	 *        the {@code file} (specified by {@code lineNumber}).
-	 * @see Dictionary#add(String, File, int, CharsetDecoder)
+	 * @see Dictionary#add(DecodedToken, File, int)
 	 */
-	void wordAdded(final String word, final File file, final int lineNumber,
-			final CharsetDecoder decoder);
+	void wordAdded(final DecodedToken decodedToken, final File file, final int lineNumber);
 }

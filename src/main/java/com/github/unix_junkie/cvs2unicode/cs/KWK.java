@@ -3,7 +3,8 @@
  */
 package com.github.unix_junkie.cvs2unicode.cs;
 
-import java.io.UnsupportedEncodingException;
+import java.nio.ByteBuffer;
+import java.nio.charset.CharacterCodingException;
 
 import com.github.unix_junkie.cvs2unicode.CharsetDecoder;
 
@@ -17,12 +18,26 @@ import com.github.unix_junkie.cvs2unicode.CharsetDecoder;
  * @author Andrew ``Bass'' Shcheglov &lt;mailto:andrewbass@gmail.com&gt;
  */
 public final class KWK implements CharsetDecoder {
+	private static final CharsetDecoder KOI = new KOI8_R();
+
+	private static final CharsetDecoder WINDOWS = new MS1251();
+
 	/**
 	 * @see CharsetDecoder#decode(byte[])
 	 */
 	@Override
-	public String decode(final byte in[]) throws UnsupportedEncodingException {
-		return new String(new String(in, "KOI8-R").getBytes("windows-1251"), "KOI8-R");
+	public String decode(final byte in[]) throws CharacterCodingException {
+		return KOI.decode(WINDOWS.encode(KOI.decode(in)));
+	}
+
+	/**
+	 * {@inheritDoc}
+	 *
+	 * @see CharsetDecoder#encode(String)
+	 */
+	@Override
+	public ByteBuffer encode(final String in) throws CharacterCodingException {
+		return KOI.encode(WINDOWS.decode(KOI.encode(in)));
 	}
 
 	/**

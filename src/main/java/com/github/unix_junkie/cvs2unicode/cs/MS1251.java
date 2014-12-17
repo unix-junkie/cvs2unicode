@@ -3,6 +3,8 @@
  */
 package com.github.unix_junkie.cvs2unicode.cs;
 
+import java.nio.charset.Charset;
+
 import com.github.unix_junkie.cvs2unicode.AbstractCharsetDecoder;
 
 /**
@@ -10,6 +12,6 @@ import com.github.unix_junkie.cvs2unicode.AbstractCharsetDecoder;
  */
 public final class MS1251 extends AbstractCharsetDecoder {
 	public MS1251() {
-		super("windows-1251");
+		super(Charset.forName("windows-1251"));
 	}
 }
