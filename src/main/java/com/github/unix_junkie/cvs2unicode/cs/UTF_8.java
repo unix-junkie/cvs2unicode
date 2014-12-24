@@ -3,7 +3,7 @@
  */
 package com.github.unix_junkie.cvs2unicode.cs;
 
-import java.nio.charset.Charset;
+import static java.nio.charset.StandardCharsets.UTF_8;
 
 import com.github.unix_junkie.cvs2unicode.AbstractCharsetDecoder;
 
@@ -12,6 +12,6 @@ import com.github.unix_junkie.cvs2unicode.AbstractCharsetDecoder;
  */
 public final class UTF_8 extends AbstractCharsetDecoder {
 	public UTF_8() {
-		super(Charset.forName("UTF-8"));
+		super(UTF_8);
 	}
 }

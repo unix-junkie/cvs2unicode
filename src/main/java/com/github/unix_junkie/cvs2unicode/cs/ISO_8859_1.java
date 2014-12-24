@@ -3,7 +3,7 @@
  */
 package com.github.unix_junkie.cvs2unicode.cs;
 
-import java.nio.charset.Charset;
+import static java.nio.charset.StandardCharsets.ISO_8859_1;
 
 import com.github.unix_junkie.cvs2unicode.AbstractCharsetDecoder;
 
@@ -12,6 +12,6 @@ import com.github.unix_junkie.cvs2unicode.AbstractCharsetDecoder;
  */
 public final class ISO_8859_1 extends AbstractCharsetDecoder {
 	public ISO_8859_1() {
-		super(Charset.forName("ISO-8859-1"));
+		super(ISO_8859_1);
 	}
 }

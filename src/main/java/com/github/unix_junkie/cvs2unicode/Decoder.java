@@ -4,10 +4,10 @@
 package com.github.unix_junkie.cvs2unicode;
 
 import static com.github.unix_junkie.cvs2unicode.Utilities.isAscii;
+import static java.nio.charset.StandardCharsets.US_ASCII;
 
 import java.io.File;
 import java.nio.charset.CharacterCodingException;
-import java.nio.charset.Charset;
 import java.util.List;
 
 /**
@@ -54,7 +54,7 @@ public final class Decoder {
 				 * If the line of text is pure ASCII,
 				 * the dictionary is not updated.
 				 */
-				return new String(data, Charset.forName("US-ASCII"));
+				return new String(data, US_ASCII);
 			}
 
 			float maximumHitRating = -1.f;
