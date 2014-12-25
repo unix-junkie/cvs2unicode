@@ -23,5 +23,5 @@ mvn exec:java
 
 # Screenshots
 
-![Main windows](http://unix-junkie.github.io/cvs2unicode/images/cvs2unicode-linux.png "Main windows")
+![Main window](http://unix-junkie.github.io/cvs2unicode/images/cvs2unicode-linux.png "Main window")
 ![Interactive disambiguation](http://unix-junkie.github.io/cvs2unicode/images/cvs2unicode.png "Interactive disambiguation")
