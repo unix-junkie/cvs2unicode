@@ -23,15 +23,6 @@ public final class Decoder {
 	/**
 	 * @param decoders
 	 * @param dictionary
-	 */
-	public Decoder(final CharsetDecoder decoders[],
-			final Dictionary dictionary) {
-		this(decoders, dictionary, new DefaultDisambiguator(decoders, dictionary));
-	}
-
-	/**
-	 * @param decoders
-	 * @param dictionary
 	 * @param disambiguator
 	 */
 	public Decoder(final CharsetDecoder decoders[],
