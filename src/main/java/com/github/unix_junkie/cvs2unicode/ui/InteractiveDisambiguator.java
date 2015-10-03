@@ -15,6 +15,7 @@ import java.nio.charset.CharacterCodingException;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 import com.github.unix_junkie.cvs2unicode.CharsetDecoder;
@@ -44,6 +45,7 @@ public final class InteractiveDisambiguator implements Disambiguator {
 	/**
 	 * @see Disambiguator#decode(byte[], File, int)
 	 */
+	@Nonnull
 	@Override
 	public DecodedToken decode(final byte data[], final File file, final int lineNumber) {
 		try {
@@ -72,12 +74,23 @@ public final class InteractiveDisambiguator implements Disambiguator {
 				decodedToken = option[0];
 			} while (decodedToken == null);
 			return decodedToken;
-		} catch (final InvocationTargetException | InterruptedException e) {
+		} catch (final InterruptedException ie) {
 			/*
 			 * Never.
 			 */
-			e.printStackTrace();
-			return null;
+			Thread.currentThread().interrupt();
+			throw new RuntimeException(ie);
+		} catch (final InvocationTargetException ite) {
+			/*
+			 * Never.
+			 */
+			final Throwable cause = ite.getCause();
+			if (cause instanceof RuntimeException) {
+				throw (RuntimeException) cause;
+			} else if (cause instanceof Error) {
+				throw (Error) cause;
+			}
+			throw new RuntimeException(cause);
 		}
 	}
 

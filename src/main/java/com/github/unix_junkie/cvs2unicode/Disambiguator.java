@@ -5,6 +5,8 @@ package com.github.unix_junkie.cvs2unicode;
 
 import java.io.File;
 
+import javax.annotation.Nonnull;
+
 /**
  * @author Andrew ``Bass'' Shcheglov &lt;mailto:andrewbass@gmail.com&gt;
  */
@@ -19,5 +21,6 @@ public interface Disambiguator {
 	 * @return the transcoded Unicode string along with the {@linkplain
 	 *         CharsetDecoder decoder} used.
 	 */
+	@Nonnull
 	DecodedToken decode(final byte data[], final File file, final int lineNumber);
 }
