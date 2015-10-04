@@ -19,6 +19,7 @@ import java.nio.file.FileVisitResult;
 import java.nio.file.Path;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.util.Optional;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -30,14 +31,14 @@ public final class FileProcessor {
 	@Nonnull
 	final Decoder decoder;
 
-	@Nullable
-	private final String cvsroot;
+	@Nonnull
+	private final Optional<String> cvsroot;
 
 	/**
 	 * @param decoder
 	 * @param cvsroot
 	 */
-	public FileProcessor(final Decoder decoder, @Nullable final String cvsroot) {
+	public FileProcessor(final Decoder decoder, final Optional<String> cvsroot) {
 		this.decoder = decoder;
 		this.cvsroot = cvsroot;
 	}

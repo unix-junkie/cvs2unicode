@@ -20,6 +20,7 @@ import java.nio.file.FileVisitResult;
 import java.nio.file.Path;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.util.Optional;
 import java.util.Vector;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.LongAdder;
@@ -72,11 +73,11 @@ public abstract class Main {
 	 * @return either a single- or multi-line RCS header entry terminated
 	 *         with a semicolon ({@code "access;"} or {@code "symbols\n TAG0:1.1;"}),
 	 *         or an empty line if the end of the RCS header is met,
-	 *         or {@code null} if the input is truncated (malformed RCS header).
+	 *         or an {@linkplain Optional#empty() empty Optional} if the
+	 *         input is truncated (malformed RCS header).
 	 * @throws IOException
 	 */
-	@Nullable
-	static String readHeaderLine(final BufferedReader in) throws IOException {
+	static Optional<String> readHeaderLine(final BufferedReader in) throws IOException {
 		final StringBuilder headerLine = new StringBuilder();
 		String line;
 		while ((line = in.readLine()) != null) {
@@ -86,7 +87,10 @@ public abstract class Main {
 			 * or once ';' is reached.
 			 */
 			if (line.length() == 0) {
-				return line;
+				@Nonnull
+				@SuppressWarnings("null")
+				final Optional<String> optionalLine = Optional.of(line);
+				return optionalLine;
 			}
 			if (line.charAt(line.length() - 1) == ';') {
 				break;
@@ -95,10 +99,15 @@ public abstract class Main {
 		}
 
 		/*
-		 * If #append() was never called within the loop, return null
-		 * to signal EOF.
+		 * If #append() was never called within the loop, return an
+		 * empty Optional to signal EOF.
 		 */
-		return headerLine.length() == 0 ? null : headerLine.toString();
+		@Nonnull
+		@SuppressWarnings("null")
+		final Optional<String> optionalHeaderLine = headerLine.length() == 0
+				? Optional.empty()
+				: Optional.of(headerLine.toString());
+		return optionalHeaderLine;
 	}
 
 	/**
@@ -127,23 +136,25 @@ public abstract class Main {
 			 * expand  @k@;
 			 */
 			readHeaderLine(in); // skip "head"
-			final String branchOrAccess = readHeaderLine(in); // skip "branch" or "access"
-			if (branchOrAccess == null) {
+			final Optional<String> branchOrAccess = readHeaderLine(in); // skip "branch" or "access"
+			if (!branchOrAccess.isPresent()) {
 				throw new IllegalArgumentException(file.getName() + ": EOF reached.");
 			}
-			int i = branchOrAccess.startsWith("branch") ? 0 : 1;
+			int i = branchOrAccess.get().startsWith("branch") ? 0 : 1;
 			while (i++ < 4) {
 				/*
 				 * Skip 3 to 4 lines more.
 				 */
 				readHeaderLine(in);
 			}
-			final String expand = readHeaderLine(in);
-			if (expand == null) {
+			final Optional<String> optionalExpand = readHeaderLine(in);
+			if (!optionalExpand.isPresent()) {
 				throw new IllegalArgumentException(file.getName() + ": EOF reached while searching for keyword expansion.");
 			}
 
-			if (expand.length() == 0) {
+			final String expand = optionalExpand.get();
+			final int expandLength = expand.length();
+			if (expandLength == 0) {
 				/*
 				 * If the keyword expansion is not specified,
 				 * then the value is "kv" (the default).
@@ -152,12 +163,12 @@ public abstract class Main {
 			}
 
 			if (!expand.matches("^expand\\s+\\@[bklov]{1,3}\\@\\;$")) {
-				throw new IllegalArgumentException(file.getName() + ": Incorrect keyword expansion format: " + expand);
+				throw new IllegalArgumentException(file.getName() + ": Incorrect keyword expansion format: " + optionalExpand);
 			}
 
 			@Nonnull
 			@SuppressWarnings("null")
-			final String cvsKeywords = expand.substring("expand\t@".length(), expand.length() - 2);
+			final String cvsKeywords = expand.substring("expand\t@".length(), expandLength - 2);
 			return cvsKeywords;
 		}
 	}
@@ -214,14 +225,15 @@ public abstract class Main {
 	}
 
 	/**
-	 * @param cvsroot
+	 * @param optionalCvsroot
 	 * @throws IOException
 	 */
-	public static File toFile(@Nullable final String cvsroot) throws IOException {
-		if (cvsroot == null) {
+	public static File toFile(final Optional<String> optionalCvsroot) throws IOException {
+		if (!optionalCvsroot.isPresent()) {
 			throw new IOException("CVSROOT is undefined; exiting...");
 		}
 
+		final String cvsroot = optionalCvsroot.get();
 		if (!cvsroot.matches("^\\:local\\:.*$")) {
 			throw new IOException("Only :local: scheme is supported; exiting...");
 		}
@@ -270,7 +282,9 @@ public abstract class Main {
 			}
 		};
 
-		final Dictionary dictionary = new Dictionary((word, file, lineNumber) -> invokeLater(() -> {
+		@Nonnull
+		@SuppressWarnings("null")
+		final Optional<DictionaryChangeListener> changeListener = Optional.of((word, file, lineNumber) -> invokeLater(() -> {
 			try {
 				tableModel.addRow(new String[] {word.getDecodedData().toLowerCase(), file.getName(), String.valueOf(lineNumber), word.getDecoder().charset()});
 			} catch (final CharacterCodingException cce) {
@@ -280,13 +294,17 @@ public abstract class Main {
 				cce.printStackTrace();
 			}
 		}));
+		final Dictionary dictionary = new Dictionary(changeListener);
 		final InteractiveDisambiguator disambiguator = new InteractiveDisambiguator(DECODERS);
 		final Decoder decoder = new Decoder(DECODERS, dictionary, disambiguator);
 
+		@Nonnull
+		@SuppressWarnings("null")
+		final Optional<String> optionalCvsroot = Optional.ofNullable(cvsroot);
 		final JFrame frame = MainFrameFactory.newInstance(cvsroot,
 				tableModel,
 				backgroundWorker,
-				new FileProcessor(decoder, cvsroot));
+				new FileProcessor(decoder, optionalCvsroot));
 		disambiguator.setParent(frame);
 		frame.pack();
 		frame.setVisible(true);

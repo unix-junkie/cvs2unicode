@@ -21,6 +21,7 @@ import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.io.File;
 import java.io.IOException;
+import java.util.Optional;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -180,11 +181,7 @@ final class Message extends JPanel {
 	 *
 	 * @param file
 	 */
-	void setFile(@Nullable final File file) {
-		if (file == null) {
-			throw new IllegalArgumentException();
-		}
-
+	void setFile(final File file) {
 		this.file = file;
 
 		final String rcsFileRelativePath = getRcsFileRelativePath(file);
@@ -241,7 +238,7 @@ final class Message extends JPanel {
 		try {
 			@Nonnull
 			@SuppressWarnings("null")
-			final String localCvsRootPath = toFile(getenv("CVSROOT")).getPath();
+			final String localCvsRootPath = toFile(Optional.ofNullable(getenv("CVSROOT"))).getPath();
 			return localCvsRootPath;
 		} catch (final IOException ignored) {
 			/*

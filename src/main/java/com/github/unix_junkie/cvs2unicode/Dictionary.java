@@ -24,12 +24,12 @@ import java.nio.charset.CharacterCodingException;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
 import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 
 import com.atlascopco.hunspell.Hunspell;
 
@@ -55,6 +55,10 @@ public final class Dictionary {
 
 	private static final String AFFIX_SUFFIX = ".aff";
 
+	@Nonnull
+	@SuppressWarnings("null")
+	private static final Optional<DictionaryChangeListener> EMPTY = Optional.empty();
+
 
 	private final Set<Hunspell> analyzers = new LinkedHashSet<>();
 
@@ -66,16 +70,17 @@ public final class Dictionary {
 	 */
 	private final SortedSet<String> wordCache = new TreeSet<>();
 
-	private final DictionaryChangeListener changeListener;
+	@Nonnull
+	private final Optional<DictionaryChangeListener> changeListener;
 
 	public Dictionary() {
-		this(null);
+		this(EMPTY);
 	}
 
 	/**
 	 * @param changeListener
 	 */
-	public Dictionary(@Nullable final DictionaryChangeListener changeListener) {
+	public Dictionary(final Optional<DictionaryChangeListener> changeListener) {
 		/*
 		 * Dictionaries are loaded *before* the listener is initialized.
 		 */
@@ -95,8 +100,8 @@ public final class Dictionary {
 	 */
 	public void add(final DecodedToken decodedToken, final File file, final int lineNumber)
 	throws CharacterCodingException {
-		if (this.changeListener != null && !this.contains(decodedToken)) {
-			this.changeListener.wordAdded(decodedToken, file, lineNumber);
+		if (this.changeListener.isPresent() && !this.contains(decodedToken)) {
+			this.changeListener.get().wordAdded(decodedToken, file, lineNumber);
 		}
 		this.add(decodedToken);
 	}
@@ -137,7 +142,10 @@ public final class Dictionary {
 	 * @return the the <em>hit rating</em> for a given line of text.
 	 */
 	public float hitRating(final String line) {
-		final List<String> words = splitIntoWords(line);
+		@Nonnull
+		@SuppressWarnings("null")
+		final Optional<String> optionalLine = Optional.of(line);
+		final List<String> words = splitIntoWords(optionalLine);
 
 		/*
 		 * Retain only non-ASCII words.

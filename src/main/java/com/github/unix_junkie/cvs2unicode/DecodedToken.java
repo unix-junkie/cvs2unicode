@@ -9,6 +9,7 @@ import java.nio.ByteBuffer;
 import java.nio.charset.CharacterCodingException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 import javax.annotation.Nonnull;
 
@@ -70,7 +71,10 @@ public class DecodedToken {
 
 	public List<DecodedToken> splitIntoWords() throws CharacterCodingException {
 		final List<DecodedToken> decodedTokens = new ArrayList<>();
-		for (final String word : Utilities.splitIntoWords(this.getDecodedData())) {
+		@Nonnull
+		@SuppressWarnings("null")
+		final Optional<String> decodedData = Optional.of(this.getDecodedData());
+		for (final String word : Utilities.splitIntoWords(decodedData)) {
 			@Nonnull
 			@SuppressWarnings("null")
 			final String nonNullWord = word;

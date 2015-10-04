@@ -7,10 +7,10 @@ import static java.util.Collections.emptyList;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.regex.Pattern;
 
 import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 
 /**
  * @author Andrew ``Bass'' Shcheglov &lt;mailto:andrewbass@gmail.com&gt;
@@ -40,8 +40,8 @@ public abstract class Utilities {
 	 *
 	 * @param line
 	 */
-	public static List<String> splitIntoWords(@Nullable final String line) {
-		if (line == null || line.length() == 0) {
+	public static List<String> splitIntoWords(final Optional<String> line) {
+		if (!line.isPresent() || line.get().length() == 0) {
 			@Nonnull
 			@SuppressWarnings("null")
 			final List<String> emptyList = emptyList();
@@ -49,7 +49,7 @@ public abstract class Utilities {
 		}
 
 		final List<String> words = new ArrayList<>();
-		for (final String probablyWord : WORD_DELIMITERS_PATTERN.split(line)) {
+		for (final String probablyWord : WORD_DELIMITERS_PATTERN.split(line.get())) {
 			if (probablyWord.length() == 0) {
 				continue;
 			}

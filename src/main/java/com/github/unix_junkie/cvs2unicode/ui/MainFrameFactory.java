@@ -29,6 +29,7 @@ import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
 import java.io.File;
 import java.io.IOException;
+import java.util.Optional;
 import java.util.concurrent.ExecutorService;
 
 import javax.annotation.Nonnull;
@@ -131,7 +132,10 @@ public final class MainFrameFactory {
 			final long t0 = currentTimeMillis();
 			final File localCvsRoot;
 			try {
-				localCvsRoot = toFile(cvsRoot);
+				@Nonnull
+				@SuppressWarnings("null")
+				final Optional<String> optionalCvsroot = Optional.ofNullable(cvsRoot);
+				localCvsRoot = toFile(optionalCvsroot);
 			} catch (final IOException ioe) {
 				showMessageDialog(mainFrame, ioe.getMessage());
 				System.exit(0);

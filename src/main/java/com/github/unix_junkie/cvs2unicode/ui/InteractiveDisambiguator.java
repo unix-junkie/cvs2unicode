@@ -104,7 +104,7 @@ public final class InteractiveDisambiguator implements Disambiguator {
 	/**
 	 * @param parent
 	 */
-	public void setParent(@Nullable final Component parent) {
+	public void setParent(final Component parent) {
 		this.parent = parent;
 	}
 
