@@ -19,6 +19,8 @@ import java.nio.file.Path;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 
+import javax.annotation.Nonnull;
+
 /**
  * @author Andrew ``Bass'' Shcheglov &lt;mailto:andrewbass@gmail.com&gt;
  */
@@ -85,7 +87,10 @@ public final class FileProcessor {
 			String line;
 			int lineNumber = 0;
 			while ((line = in.readLine()) != null) {
-				decoder.decode(line.getBytes(encoding), file, ++lineNumber);
+				@Nonnull
+				@SuppressWarnings("null")
+				final byte lineBytes[] = line.getBytes(encoding);
+				decoder.decode(lineBytes, file, ++lineNumber);
 			}
 		}
 

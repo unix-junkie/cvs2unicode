@@ -22,5 +22,5 @@ public interface Disambiguator {
 	 *         CharsetDecoder decoder} used.
 	 */
 	@Nonnull
-	DecodedToken decode(final byte data[], final File file, final int lineNumber);
+	DecodedToken decode(@Nonnull final byte data[], final File file, final int lineNumber);
 }

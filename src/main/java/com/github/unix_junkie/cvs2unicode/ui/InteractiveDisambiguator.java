@@ -26,7 +26,8 @@ import com.github.unix_junkie.cvs2unicode.Disambiguator;
  * @author Andrew ``Bass'' Shcheglov &lt;mailto:andrewbass@gmail.com&gt;
  */
 public final class InteractiveDisambiguator implements Disambiguator {
-	private final CharsetDecoder decoders[];
+	@Nonnull
+	private final CharsetDecoder[] decoders;
 
 	@Nullable
 	private volatile Component parent;
@@ -36,8 +37,11 @@ public final class InteractiveDisambiguator implements Disambiguator {
 	/**
 	 * @param decoders
 	 */
-	public InteractiveDisambiguator(final CharsetDecoder decoders[]) {
-		this.decoders = decoders.clone();
+	public InteractiveDisambiguator(@Nonnull final CharsetDecoder decoders[]) {
+		@Nonnull
+		@SuppressWarnings("null")
+		final CharsetDecoder decodersClone[] = decoders.clone();
+		this.decoders = decodersClone;
 	}
 
 	boolean flag = true;
@@ -47,11 +51,14 @@ public final class InteractiveDisambiguator implements Disambiguator {
 	 */
 	@Nonnull
 	@Override
-	public DecodedToken decode(final byte data[], final File file, final int lineNumber) {
+	public DecodedToken decode(@Nonnull final byte data[], final File file, final int lineNumber) {
 		try {
 			final List<Option> options = new ArrayList<>();
 			for (final CharsetDecoder decoder : this.decoders) {
-				options.add(new Option(data, decoder));
+				@Nonnull
+				@SuppressWarnings("null")
+				final CharsetDecoder nonNullDecoder = decoder;
+				options.add(new Option(data, nonNullDecoder));
 			}
 			invokeLater(() -> {
 				this.message.setFile(file);
@@ -124,7 +131,7 @@ public final class InteractiveDisambiguator implements Disambiguator {
 		 * @param data
 		 * @param decoder
 		 */
-		Option(final byte data[], final CharsetDecoder decoder) {
+		Option(@Nonnull final byte data[], @Nonnull final CharsetDecoder decoder) {
 			super(data, decoder);
 		}
 

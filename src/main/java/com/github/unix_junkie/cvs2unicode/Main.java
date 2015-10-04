@@ -23,6 +23,7 @@ import java.util.Vector;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.LongAdder;
 
+import javax.annotation.Nonnull;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.UIManager;
@@ -46,6 +47,7 @@ import com.github.unix_junkie.cvs2unicode.ui.MainFrameFactory;
  * @author Andrew ``Bass'' Shcheglov &lt;mailto:andrewbass@gmail.com&gt;
  */
 public abstract class Main {
+	@Nonnull
 	private static final CharsetDecoder DECODERS[] = {
 		new ISO_8859_1(),
 		new ISO_8859_5(),

@@ -10,6 +10,8 @@ import java.io.File;
 import java.nio.charset.CharacterCodingException;
 import java.util.List;
 
+import javax.annotation.Nonnull;
+
 /**
  * @author Andrew ``Bass'' Shcheglov &lt;mailto:andrewbass@gmail.com&gt;
  */
@@ -38,7 +40,7 @@ public final class Decoder {
 	 * @param file the file being changed
 	 * @param lineNumber
 	 */
-	public String decode(final byte data[], final File file, final int lineNumber) {
+	public String decode(@Nonnull final byte data[], final File file, final int lineNumber) {
 		try {
 			if (isAscii(data)) {
 				/*
@@ -49,6 +51,8 @@ public final class Decoder {
 			}
 
 			float maximumHitRating = -1.f;
+			@Nonnull
+			@SuppressWarnings("null")
 			CharsetDecoder detectedDecoder = this.decoders[0];
 			for (final CharsetDecoder probableDecoder : this.decoders) {
 				final String decodedData = probableDecoder.decode(data);

@@ -28,6 +28,8 @@ import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
+import javax.annotation.Nonnull;
+
 import com.atlascopco.hunspell.Hunspell;
 
 /**
@@ -249,7 +251,10 @@ public final class Dictionary {
 					final int i = wordWithAffix.indexOf('/');
 					final String word = i == -1 ? wordWithAffix : wordWithAffix.substring(0, i);
 					try {
-						this.add(new DecodedToken(word.toLowerCase()));
+						@Nonnull
+						@SuppressWarnings("null")
+						final String wordLowerCase = word.toLowerCase();
+						this.add(new DecodedToken(wordLowerCase));
 					} catch (final CharacterCodingException cce) {
 						/*
 						 * Never.

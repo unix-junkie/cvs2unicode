@@ -26,7 +26,10 @@ public class DecodedToken {
 
 	public DecodedToken(@Nonnull final String word) throws CharacterCodingException {
 		this.decoder = new UTF_8();
-		this.data = this.decoder.encode(word);
+		@Nonnull
+		@SuppressWarnings("null")
+		final ByteBuffer encodedWord = this.decoder.encode(word);
+		this.data = encodedWord;
 	}
 
 	/**
@@ -36,7 +39,10 @@ public class DecodedToken {
 	 */
 	public DecodedToken(@Nonnull final String word,
 			@Nonnull final CharsetDecoder decoder) throws CharacterCodingException {
-		this.data = decoder.encode(word);
+		@Nonnull
+		@SuppressWarnings("null")
+		final ByteBuffer encodedWord = decoder.encode(word);
+		this.data = encodedWord;
 		this.decoder = decoder;
 	}
 
@@ -49,7 +55,10 @@ public class DecodedToken {
 		/*
 		 * Avoid cloning a byte array -- it's not getting changed anyway.
 		 */
-		this.data = ByteBuffer.wrap(data);
+		@Nonnull
+		@SuppressWarnings("null")
+		final ByteBuffer wrappedData = ByteBuffer.wrap(data);
+		this.data = wrappedData;
 		this.decoder = decoder;
 	}
 
@@ -69,7 +78,10 @@ public class DecodedToken {
 	public List<DecodedToken> splitIntoWords() throws CharacterCodingException {
 		final List<DecodedToken> decodedTokens = new ArrayList<>();
 		for (final String word : Utilities.splitIntoWords(this.getDecodedData())) {
-			decodedTokens.add(new DecodedToken(word, this.decoder));
+			@Nonnull
+			@SuppressWarnings("null")
+			final String nonNullWord = word;
+			decodedTokens.add(new DecodedToken(nonNullWord, this.decoder));
 		}
 		return unmodifiableList(decodedTokens);
 	}
