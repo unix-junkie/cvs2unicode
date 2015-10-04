@@ -4,6 +4,7 @@
 package com.github.unix_junkie.cvs2unicode;
 
 import static java.lang.System.getenv;
+import static java.nio.file.FileVisitResult.CONTINUE;
 import static java.nio.file.Files.walkFileTree;
 import static java.util.Arrays.asList;
 import static java.util.concurrent.Executors.newSingleThreadExecutor;
@@ -24,6 +25,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.LongAdder;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.UIManager;
@@ -64,10 +66,17 @@ public abstract class Main {
 	}
 
 	/**
+	 * <p>Reads the next header entry from the RCS-versioned file.</p>
+	 *
 	 * @param in
+	 * @return either a single- or multi-line RCS header entry terminated
+	 *         with a semicolon ({@code "access;"} or {@code "symbols\n TAG0:1.1;"}),
+	 *         or an empty line if the end of the RCS header is met,
+	 *         or {@code null} if the input is truncated (malformed RCS header).
 	 * @throws IOException
 	 */
-	private static String readHeaderLine(final BufferedReader in) throws IOException {
+	@Nullable
+	static String readHeaderLine(final BufferedReader in) throws IOException {
 		final StringBuilder headerLine = new StringBuilder();
 		String line;
 		while ((line = in.readLine()) != null) {
@@ -76,89 +85,98 @@ public abstract class Main {
 			 * Break on an empty string read ("expand" is missing)
 			 * or once ';' is reached.
 			 */
-			if (line.length() == 0 || line.charAt(line.length() - 1) == ';') {
+			if (line.length() == 0) {
+				return line;
+			}
+			if (line.charAt(line.length() - 1) == ';') {
 				break;
 			}
 			headerLine.append('\n');
 		}
-		return headerLine.toString();
+
+		/*
+		 * If #append() was never called within the loop, return null
+		 * to signal EOF.
+		 */
+		return headerLine.length() == 0 ? null : headerLine.toString();
 	}
 
 	/**
 	 * @param file
 	 * @return the CVS keyword expansion mode for this particular file,
 	 *         one of "b", "k", "kv", "kvl", "o", "v".
+	 * @throws IOException
 	 */
-	private static String getCvsKeywords(final File file) {
-		try {
-			/*
-			 * The encoding used when reading a file's header
-			 * can be arbitrary (even US-ASCII), since CVS
-			 * tag and branch names can only contain ASCII.
+	private static String getCvsKeywords(final File file) throws IOException {
+		/*
+		 * The encoding used when reading a file's header
+		 * can be arbitrary (even US-ASCII), since CVS
+		 * tag and branch names can only contain ASCII.
+		 */
+		try (final BufferedReader in = new BufferedReader(new InputStreamReader(new FileInputStream(file), "ISO-8859-1"))) {
+			/*-
+			 * Sample header of an RCS/CVS file
+			 * ("branch" is optional, "symbols" may be multiline):
+			 *
+			 * head    1.1;
+			 * branch	1.1.1;
+			 * access;
+			 * symbols	XYZ;
+			 * locks; strict;
+			 * comment @# @;
+			 * expand  @k@;
 			 */
-			try (final BufferedReader in = new BufferedReader(new InputStreamReader(new FileInputStream(file), "ISO-8859-1"))) {
-				/*-
-				 * Sample header of an RCS/CVS file
-				 * ("branch" is optional, "symbols" may be multiline):
-				 *
-				 * head    1.1;
-				 * branch	1.1.1;
-				 * access;
-				 * symbols	XYZ;
-				 * locks; strict;
-				 * comment @# @;
-				 * expand  @k@;
-				 */
-				readHeaderLine(in); // skip "head"
-				int i = readHeaderLine(in).startsWith("branch") ? 0 : 1; // skip "branch" or "access"
-				while (i++ < 4) {
-					/*
-					 * Skip 3 to 4 lines more.
-					 */
-					readHeaderLine(in);
-				}
-				final String expand = readHeaderLine(in);
-				if (expand == null) {
-					throw new IllegalArgumentException(file.getName() + ": EOF reached while searching for keyword expansion.");
-				}
-
-				if (expand.length() == 0) {
-					/*
-					 * If the keyword expansion is not specified,
-					 * then the value is "kv" (the default).
-					 */
-					return "kv";
-				}
-
-				if (!expand.matches("^expand\\s+\\@[bklov]{1,3}\\@\\;$")) {
-					throw new IllegalArgumentException(file.getName() + ": Incorrect keyword expansion format: " + expand);
-				}
-
-				return expand.substring("expand\t@".length(), expand.length() - 2);
+			readHeaderLine(in); // skip "head"
+			final String branchOrAccess = readHeaderLine(in); // skip "branch" or "access"
+			if (branchOrAccess == null) {
+				throw new IllegalArgumentException(file.getName() + ": EOF reached.");
 			}
-		} catch (final IOException ioe) {
-			/*
-			 * Fatal.
-			 */
-			ioe.printStackTrace();
-			System.exit(0);
-			return null;
+			int i = branchOrAccess.startsWith("branch") ? 0 : 1;
+			while (i++ < 4) {
+				/*
+				 * Skip 3 to 4 lines more.
+				 */
+				readHeaderLine(in);
+			}
+			final String expand = readHeaderLine(in);
+			if (expand == null) {
+				throw new IllegalArgumentException(file.getName() + ": EOF reached while searching for keyword expansion.");
+			}
+
+			if (expand.length() == 0) {
+				/*
+				 * If the keyword expansion is not specified,
+				 * then the value is "kv" (the default).
+				 */
+				return "kv";
+			}
+
+			if (!expand.matches("^expand\\s+\\@[bklov]{1,3}\\@\\;$")) {
+				throw new IllegalArgumentException(file.getName() + ": Incorrect keyword expansion format: " + expand);
+			}
+
+			@Nonnull
+			@SuppressWarnings("null")
+			final String cvsKeywords = expand.substring("expand\t@".length(), expand.length() - 2);
+			return cvsKeywords;
 		}
 	}
 
 	/**
 	 * @param file
 	 * @return {@code true} if a file is marked a binary (-kb) in CVS.
+	 * @throws IOException
 	 */
-	private static boolean isBinary(final File file) {
+	private static boolean isBinary(final File file) throws IOException {
 		return getCvsKeywords(file).equals("b");
 	}
 
 	/**
 	 * @param file
 	 * @return {@code true} if a file is a versioned (i.e. managed by CVS) plain-text one.
+	 * @throws IOException
 	 */
-	static boolean isVersionedTextFile(final File file) {
+	static boolean isVersionedTextFile(final File file) throws IOException {
 		return file.getName().endsWith(",v") && !isBinary(file);
 	}
 
@@ -173,14 +191,22 @@ public abstract class Main {
 			/**
 			 * @see SimpleFileVisitor#visitFile(Object, BasicFileAttributes)
 			 */
+			@Nullable
 			@Override
-			public FileVisitResult visitFile(final Path file,
-					final BasicFileAttributes attrs)
+			public FileVisitResult visitFile(@Nullable final Path path,
+					@Nullable final BasicFileAttributes attrs)
 			throws IOException {
-				if (attrs.isRegularFile() && isVersionedTextFile(file.toFile())) {
+				if (path == null || attrs == null) {
+					return CONTINUE;
+				}
+
+				@Nonnull
+				@SuppressWarnings("null")
+				final File file = path.toFile();
+				if (attrs.isRegularFile() && isVersionedTextFile(file)) {
 					textFileCount.increment();
 				}
-				return super.visitFile(file, attrs);
+				return super.visitFile(path, attrs);
 			}
 		});
 
@@ -191,7 +217,7 @@ public abstract class Main {
 	 * @param cvsroot
 	 * @throws IOException
 	 */
-	public static File toFile(final String cvsroot) throws IOException {
+	public static File toFile(@Nullable final String cvsroot) throws IOException {
 		if (cvsroot == null) {
 			throw new IOException("CVSROOT is undefined; exiting...");
 		}
@@ -217,6 +243,8 @@ public abstract class Main {
 	public static void main(final String args[]) {
 		final String cvsroot = getenv("CVSROOT");
 
+		@Nonnull
+		@SuppressWarnings("null")
 		final ExecutorService backgroundWorker = newSingleThreadExecutor();
 
 		try {

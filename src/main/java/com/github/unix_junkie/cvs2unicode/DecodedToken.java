@@ -24,12 +24,9 @@ public class DecodedToken {
 	@Nonnull
 	private CharsetDecoder decoder;
 
-	public DecodedToken(@Nonnull final String word) throws CharacterCodingException {
+	public DecodedToken(final String word) throws CharacterCodingException {
 		this.decoder = new UTF_8();
-		@Nonnull
-		@SuppressWarnings("null")
-		final ByteBuffer encodedWord = this.decoder.encode(word);
-		this.data = encodedWord;
+		this.data = this.decoder.encode(word);
 	}
 
 	/**
@@ -37,12 +34,9 @@ public class DecodedToken {
 	 * @param decoder the most probable encoding of the word/line specified by {@code data}.
 	 * @throws CharacterCodingException
 	 */
-	public DecodedToken(@Nonnull final String word,
-			@Nonnull final CharsetDecoder decoder) throws CharacterCodingException {
-		@Nonnull
-		@SuppressWarnings("null")
-		final ByteBuffer encodedWord = decoder.encode(word);
-		this.data = encodedWord;
+	public DecodedToken(final String word,
+			final CharsetDecoder decoder) throws CharacterCodingException {
+		this.data = decoder.encode(word);
 		this.decoder = decoder;
 	}
 
@@ -50,8 +44,8 @@ public class DecodedToken {
 	 * @param data
 	 * @param decoder the most probable encoding of the word/line specified by {@code data}.
 	 */
-	public DecodedToken(@Nonnull final byte data[],
-			@Nonnull final CharsetDecoder decoder) {
+	public DecodedToken(final byte data[],
+			final CharsetDecoder decoder) {
 		/*
 		 * Avoid cloning a byte array -- it's not getting changed anyway.
 		 */
@@ -66,12 +60,11 @@ public class DecodedToken {
 		return this.decoder.decode(this.data);
 	}
 
-	@Nonnull
 	public final CharsetDecoder getDecoder() {
 		return this.decoder;
 	}
 
-	public final void setDecoder(@Nonnull final CharsetDecoder decoder) {
+	public final void setDecoder(final CharsetDecoder decoder) {
 		this.decoder = decoder;
 	}
 
@@ -83,7 +76,10 @@ public class DecodedToken {
 			final String nonNullWord = word;
 			decodedTokens.add(new DecodedToken(nonNullWord, this.decoder));
 		}
-		return unmodifiableList(decodedTokens);
+		@Nonnull
+		@SuppressWarnings("null")
+		final List<DecodedToken> unmodifiableDecodedTokens = unmodifiableList(decodedTokens);
+		return unmodifiableDecodedTokens;
 	}
 
 	public boolean isAscii() {
@@ -93,6 +89,9 @@ public class DecodedToken {
 		 * that the position and limit are owned by current thread only,
 		 * or use synchronization.
 		 */
-		return Utilities.isAscii(this.data.array());
+		@Nonnull
+		@SuppressWarnings("null")
+		final byte dataBytes[] = this.data.array();
+		return Utilities.isAscii(dataBytes);
 	}
 }

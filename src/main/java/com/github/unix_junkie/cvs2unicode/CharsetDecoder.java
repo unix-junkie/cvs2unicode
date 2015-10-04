@@ -8,6 +8,8 @@ import java.nio.CharBuffer;
 import java.nio.charset.CharacterCodingException;
 import java.nio.charset.CharsetEncoder;
 
+import javax.annotation.Nonnull;
+
 /**
  * @author Andrew ``Bass'' Shcheglov &lt;mailto:andrewbass@gmail.com&gt;
  */
@@ -34,7 +36,10 @@ public interface CharsetDecoder {
 		 * limit are owned by current thread only, or use
 		 * synchronization.
 		 */
-		return this.decode(in.array());
+		@Nonnull
+		@SuppressWarnings("null")
+		final byte data[] = in.array();
+		return this.decode(data);
 	}
 
 	/**

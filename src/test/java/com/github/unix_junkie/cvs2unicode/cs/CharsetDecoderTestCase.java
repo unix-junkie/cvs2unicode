@@ -64,7 +64,7 @@ public final class CharsetDecoderTestCase {
 	 * @throws UnsupportedEncodingException
 	 * @throws CharacterCodingException
 	 */
-	@SuppressWarnings("static-method")
+	@SuppressWarnings({"static-method", "null"})
 	@Test
 	public void testDosAsUnicode() throws UnsupportedEncodingException, CharacterCodingException {
 		final CharsetDecoder dosAsUnicode = new DosAsUnicode();

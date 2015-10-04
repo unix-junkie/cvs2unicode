@@ -6,6 +6,8 @@ package com.github.unix_junkie.cvs2unicode.cs;
 import java.nio.ByteBuffer;
 import java.nio.charset.CharacterCodingException;
 
+import javax.annotation.Nonnull;
+
 import com.github.unix_junkie.cvs2unicode.CharsetDecoder;
 
 /**
@@ -33,8 +35,11 @@ public final class DosAsUnicode implements CharsetDecoder {
 				/*
 				 * Unicode replacement character.
 				 */
-				final String accumulatorContents = DOS.decode(UNICODE.encode(accumulator.toString()));
-				result.append(accumulatorContents);
+				@Nonnull
+				@SuppressWarnings("null")
+				final String accumulatorContents = accumulator.toString();
+				final String decodedAccumulatorContents = DOS.decode(UNICODE.encode(accumulatorContents));
+				result.append(decodedAccumulatorContents);
 				result.append(c);
 				accumulator.setLength(0);
 			} else {
@@ -42,10 +47,17 @@ public final class DosAsUnicode implements CharsetDecoder {
 			}
 		}
 
-		final String accumulatorContents = DOS.decode(UNICODE.encode(accumulator.toString()));
-		result.append(accumulatorContents);
+		@Nonnull
+		@SuppressWarnings("null")
+		final String accumulatorContents = accumulator.toString();
 
-		return result.toString();
+		final String decodedAccumulatorContents = DOS.decode(UNICODE.encode(accumulatorContents));
+		result.append(decodedAccumulatorContents);
+
+		@Nonnull
+		@SuppressWarnings("null")
+		final String resultString = result.toString();
+		return resultString;
 	}
 
 	/**
@@ -55,7 +67,10 @@ public final class DosAsUnicode implements CharsetDecoder {
 	 */
 	@Override
 	public ByteBuffer encode(final String in) throws CharacterCodingException {
-		return UNICODE.encode(UNICODE.decode(DOS.encode(in).array()));
+		@Nonnull
+		@SuppressWarnings("null")
+		final byte dosEncoded[] = DOS.encode(in).array();
+		return UNICODE.encode(UNICODE.decode(dosEncoded));
 	}
 
 	/**

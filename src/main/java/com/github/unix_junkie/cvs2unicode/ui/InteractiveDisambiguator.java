@@ -37,7 +37,7 @@ public final class InteractiveDisambiguator implements Disambiguator {
 	/**
 	 * @param decoders
 	 */
-	public InteractiveDisambiguator(@Nonnull final CharsetDecoder decoders[]) {
+	public InteractiveDisambiguator(final CharsetDecoder decoders[]) {
 		@Nonnull
 		@SuppressWarnings("null")
 		final CharsetDecoder decodersClone[] = decoders.clone();
@@ -117,10 +117,13 @@ public final class InteractiveDisambiguator implements Disambiguator {
 		 * (which are HTML 3.2 compliant),
 		 * so it doesn't need to be escaped here.
 		 */
-		return text.replace("&", "&amp;")
+		@Nonnull
+		@SuppressWarnings("null")
+		final String escapedHtml = text.replace("&", "&amp;")
 				.replace("<", "&lt;")
 				.replace(">", "&gt;")
 				.replace("\"", "&quot;");
+		return escapedHtml;
 	}
 
 	/**
@@ -131,7 +134,7 @@ public final class InteractiveDisambiguator implements Disambiguator {
 		 * @param data
 		 * @param decoder
 		 */
-		Option(@Nonnull final byte data[], @Nonnull final CharsetDecoder decoder) {
+		Option(final byte data[], final CharsetDecoder decoder) {
 			super(data, decoder);
 		}
 
@@ -155,7 +158,10 @@ public final class InteractiveDisambiguator implements Disambiguator {
 				 * Never.
 				 */
 				cce.printStackTrace();
-				return this.toString(cce.getMessage());
+				@Nonnull
+				@SuppressWarnings("null")
+				final String cceMessage = cce.getMessage();
+				return this.toString(cceMessage);
 			}
 		}
 	}

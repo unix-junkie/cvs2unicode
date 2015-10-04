@@ -10,6 +10,8 @@ import java.nio.charset.Charset;
 import java.nio.charset.MalformedInputException;
 import java.nio.charset.UnmappableCharacterException;
 
+import javax.annotation.Nonnull;
+
 /**
  * @author Andrew ``Bass'' Shcheglov &lt;mailto:andrewbass@gmail.com&gt;
  */
@@ -29,7 +31,10 @@ public abstract class AbstractCharsetDecoder implements CharsetDecoder {
 	@Override
 	public final String decode(final byte in[]) throws CharacterCodingException {
 		try {
-			return this.charset.newDecoder().decode(ByteBuffer.wrap(in)).toString();
+			@Nonnull
+			@SuppressWarnings("null")
+			final String decodedData = this.charset.newDecoder().decode(ByteBuffer.wrap(in)).toString();
+			return decodedData;
 		} catch (final MalformedInputException | UnmappableCharacterException e) {
 			return new String(in, this.charset);
 		}
@@ -51,7 +56,15 @@ public abstract class AbstractCharsetDecoder implements CharsetDecoder {
 		try {
 			buf = this.charset.newEncoder().encode(CharBuffer.wrap(in));
 		} catch (final UnmappableCharacterException uce) {
-			return ByteBuffer.wrap(in.getBytes(this.charset));
+			/*
+			 * Same as above, but doesn't throw
+			 * UnmappableCharacterException, silently replacing
+			 * unmappable characters with '?'. 
+			 */
+			@Nonnull
+			@SuppressWarnings("null")
+			final ByteBuffer wrappedData = ByteBuffer.wrap(in.getBytes(this.charset));
+			return wrappedData;
 		}
 		buf.position(0);
 
@@ -68,7 +81,11 @@ public abstract class AbstractCharsetDecoder implements CharsetDecoder {
 		 */
 		final byte data[] = new byte[limit];
 		buf.get(data);
-		return ByteBuffer.wrap(data);
+
+		@Nonnull
+		@SuppressWarnings("null")
+		final ByteBuffer wrappedData = ByteBuffer.wrap(data);
+		return wrappedData;
 	}
 
 	/**
@@ -76,7 +93,10 @@ public abstract class AbstractCharsetDecoder implements CharsetDecoder {
 	 */
 	@Override
 	public final String charset() {
-		return this.charset.name();
+		@Nonnull
+		@SuppressWarnings("null")
+		final String charsetName = this.charset.name();
+		return charsetName;
 	}
 
 	/**

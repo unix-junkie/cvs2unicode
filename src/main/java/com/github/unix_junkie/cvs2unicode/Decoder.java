@@ -11,6 +11,7 @@ import java.nio.charset.CharacterCodingException;
 import java.util.List;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 /**
  * @author Andrew ``Bass'' Shcheglov &lt;mailto:andrewbass@gmail.com&gt;
@@ -40,7 +41,8 @@ public final class Decoder {
 	 * @param file the file being changed
 	 * @param lineNumber
 	 */
-	public String decode(@Nonnull final byte data[], final File file, final int lineNumber) {
+	@Nullable
+	public String decode(final byte data[], final File file, final int lineNumber) {
 		try {
 			if (isAscii(data)) {
 				/*

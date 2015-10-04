@@ -29,6 +29,7 @@ import java.util.SortedSet;
 import java.util.TreeSet;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 import com.atlascopco.hunspell.Hunspell;
 
@@ -74,7 +75,7 @@ public final class Dictionary {
 	/**
 	 * @param changeListener
 	 */
-	public Dictionary(final DictionaryChangeListener changeListener) {
+	public Dictionary(@Nullable final DictionaryChangeListener changeListener) {
 		/*
 		 * Dictionaries are loaded *before* the listener is initialized.
 		 */
@@ -143,7 +144,7 @@ public final class Dictionary {
 		 */
 		final List<String> nonAsciiWords = new ArrayList<>();
 		for (final String word : words) {
-			if (isAscii(word)) {
+			if (word == null || isAscii(word)) {
 				continue;
 			}
 

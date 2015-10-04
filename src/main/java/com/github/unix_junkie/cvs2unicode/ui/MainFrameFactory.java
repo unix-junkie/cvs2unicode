@@ -31,6 +31,8 @@ import java.io.File;
 import java.io.IOException;
 import java.util.concurrent.ExecutorService;
 
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -52,7 +54,11 @@ import com.github.unix_junkie.cvs2unicode.FileProcessor;
 public final class MainFrameFactory {
 	private static final WindowListener WINDOW_CLOSING_LISTENER = new WindowAdapter() {
 		@Override
-		public void windowClosing(final WindowEvent e) {
+		public void windowClosing(@Nullable final WindowEvent e) {
+			if (e == null) {
+				return;
+			}
+
 			final JFrame frame = (JFrame) e.getSource();
 			/*
 			 * If we show the dialog immediately rather than queue
@@ -74,7 +80,7 @@ public final class MainFrameFactory {
 	 * @param processor
 	 * @wbp.parser.entryPoint
 	 */
-	public static JFrame newInstance(final String cvsRoot,
+	public static JFrame newInstance(@Nullable final String cvsRoot,
 			final TableModel tableModel,
 			final ExecutorService backgroundWorker,
 			final FileProcessor processor) {
@@ -254,7 +260,10 @@ public final class MainFrameFactory {
 			return processor.processDirectory(l);
 		} catch (final IOException ioe) {
 			ioe.printStackTrace();
-			return ioe.getMessage();
+			@Nonnull
+			@SuppressWarnings("null")
+			final String message = ioe.getMessage();
+			return message;
 		}
 	}
 }

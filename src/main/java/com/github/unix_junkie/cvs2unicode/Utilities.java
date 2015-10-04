@@ -9,6 +9,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Pattern;
 
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+
 /**
  * @author Andrew ``Bass'' Shcheglov &lt;mailto:andrewbass@gmail.com&gt;
  */
@@ -26,7 +29,10 @@ public abstract class Utilities {
 		regex.append('[');
 		WORD_DELIMITERS.chars().forEach(c -> regex.append('\\').append((char) c));
 		regex.append("]+");
-		return regex.toString();
+		@Nonnull
+		@SuppressWarnings("null")
+		final String regexString = regex.toString();
+		return regexString;
 	}
 
 	/**
@@ -34,9 +40,12 @@ public abstract class Utilities {
 	 *
 	 * @param line
 	 */
-	public static List<String> splitIntoWords(final String line) {
+	public static List<String> splitIntoWords(@Nullable final String line) {
 		if (line == null || line.length() == 0) {
-			return emptyList();
+			@Nonnull
+			@SuppressWarnings("null")
+			final List<String> emptyList = emptyList();
+			return emptyList;
 		}
 
 		final List<String> words = new ArrayList<>();

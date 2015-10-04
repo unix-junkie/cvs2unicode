@@ -6,6 +6,7 @@ package com.github.unix_junkie.cvs2unicode;
 import static com.github.unix_junkie.cvs2unicode.Main.isVersionedTextFile;
 import static com.github.unix_junkie.cvs2unicode.Main.toFile;
 import static java.lang.System.currentTimeMillis;
+import static java.nio.file.FileVisitResult.CONTINUE;
 import static java.nio.file.Files.walkFileTree;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
@@ -20,20 +21,23 @@ import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 /**
  * @author Andrew ``Bass'' Shcheglov &lt;mailto:andrewbass@gmail.com&gt;
  */
 public final class FileProcessor {
+	@Nonnull
 	final Decoder decoder;
 
+	@Nullable
 	private final String cvsroot;
 
 	/**
 	 * @param decoder
 	 * @param cvsroot
 	 */
-	public FileProcessor(final Decoder decoder, final String cvsroot) {
+	public FileProcessor(final Decoder decoder, @Nullable final String cvsroot) {
 		this.decoder = decoder;
 		this.cvsroot = cvsroot;
 	}
@@ -48,14 +52,22 @@ public final class FileProcessor {
 			/**
 			 * @see SimpleFileVisitor#visitFile(Object, BasicFileAttributes)
 			 */
+			@Nullable
 			@Override
-			public FileVisitResult visitFile(final Path file,
-					final BasicFileAttributes attrs)
+			public FileVisitResult visitFile(@Nullable final Path path,
+					@Nullable final BasicFileAttributes attrs)
 			throws IOException {
-				if (attrs.isRegularFile()) {
-					processFile(FileProcessor.this.decoder, file.toFile(), l);
+				if (path == null || attrs == null) {
+					return CONTINUE;
 				}
-				return super.visitFile(file, attrs);
+
+				if (attrs.isRegularFile()) {
+					@Nonnull
+					@SuppressWarnings("null")
+					final File file = path.toFile();
+					processFile(FileProcessor.this.decoder, file, l);
+				}
+				return super.visitFile(path, attrs);
 			}
 		});
 		final long t1 = currentTimeMillis();

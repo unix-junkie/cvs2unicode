@@ -22,6 +22,8 @@ import java.awt.Insets;
 import java.io.File;
 import java.io.IOException;
 
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import javax.swing.AbstractListModel;
 import javax.swing.JButton;
 import javax.swing.JLabel;
@@ -123,12 +125,13 @@ final class Message extends JPanel {
 
 		final JButton lineButton = new JButton("...");
 		lineButton.addActionListener(e -> {
-			if (Message.this.file == null) {
+			final File fileSnapshot = Message.this.file;
+			if (fileSnapshot == null) {
 				return;
 			}
 
 			try {
-				EDITOR.edit(Message.this.file, Message.this.line);
+				EDITOR.edit(fileSnapshot, Message.this.line);
 			} catch (final IOException ioe) {
 				lineButton.setEnabled(false);
 				lineButton.setToolTipText(ioe.getMessage());
@@ -177,7 +180,7 @@ final class Message extends JPanel {
 	 *
 	 * @param file
 	 */
-	void setFile(final File file) {
+	void setFile(@Nullable final File file) {
 		if (file == null) {
 			throw new IllegalArgumentException();
 		}
@@ -226,6 +229,7 @@ final class Message extends JPanel {
 			/**
 			 * @see ListModel#getElementAt(int)
 			 */
+			@Nullable
 			@Override
 			public String getElementAt(final int index) {
 				return previouslyUsedEncodings[index];
@@ -235,7 +239,10 @@ final class Message extends JPanel {
 
 	private static String getLocalCvsrootPath() {
 		try {
-			return toFile(getenv("CVSROOT")).getPath();
+			@Nonnull
+			@SuppressWarnings("null")
+			final String localCvsRootPath = toFile(getenv("CVSROOT")).getPath();
+			return localCvsRootPath;
 		} catch (final IOException ignored) {
 			/*
 			 * Ignore - we're checking the same at application startup.
@@ -250,6 +257,9 @@ final class Message extends JPanel {
 	private static String getRcsFileRelativePath(final File file) {
 		final String path = file.getPath();
 		final String rcsFileRelativePath = path.startsWith(LOCAL_CVSROOT_PATH) ? path.substring(LOCAL_CVSROOT_PATH.length()) : path;
-		return getProperty("os.name").startsWith("Windows") ? rcsFileRelativePath.replace('\\', '/') : rcsFileRelativePath;
+		@Nonnull
+		@SuppressWarnings("null")
+		final String normalizedRcsRelativePath = getProperty("os.name").startsWith("Windows") ? rcsFileRelativePath.replace('\\', '/') : rcsFileRelativePath;
+		return normalizedRcsRelativePath;
 	}
 }
