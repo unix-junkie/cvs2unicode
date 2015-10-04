@@ -102,6 +102,9 @@ public final class FileProcessor {
 				@Nonnull
 				@SuppressWarnings("null")
 				final byte lineBytes[] = line.getBytes(encoding);
+				/*
+				 * Decoded line of text is ignored so far.
+				 */
 				decoder.decode(lineBytes, file, ++lineNumber);
 			}
 		}
