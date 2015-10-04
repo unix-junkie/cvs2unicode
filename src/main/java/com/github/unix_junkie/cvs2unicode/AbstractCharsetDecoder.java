@@ -59,7 +59,7 @@ public abstract class AbstractCharsetDecoder implements CharsetDecoder {
 			/*
 			 * Same as above, but doesn't throw
 			 * UnmappableCharacterException, silently replacing
-			 * unmappable characters with '?'. 
+			 * unmappable characters with '?'.
 			 */
 			@Nonnull
 			@SuppressWarnings("null")
