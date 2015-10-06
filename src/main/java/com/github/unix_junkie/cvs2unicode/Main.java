@@ -24,6 +24,7 @@ import java.util.Optional;
 import java.util.Vector;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.LongAdder;
+import java.util.logging.LogManager;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -50,6 +51,14 @@ import com.github.unix_junkie.cvs2unicode.ui.MainFrameFactory;
  * @author Andrew ``Bass'' Shcheglov &lt;mailto:andrewbass@gmail.com&gt;
  */
 public abstract class Main {
+	static {
+		try {
+			LogManager.getLogManager().readConfiguration(Main.class.getResourceAsStream("/logging.properties"));
+		} catch (final IOException ioe) {
+			System.err.println(ioe.getMessage());
+		}
+	}
+
 	@Nonnull
 	private static final CharsetDecoder DECODERS[] = {
 		new ISO_8859_1(),

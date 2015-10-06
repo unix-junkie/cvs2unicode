@@ -10,6 +10,8 @@ import static java.awt.GridBagConstraints.EAST;
 import static java.awt.GridBagConstraints.HORIZONTAL;
 import static java.awt.GridBagConstraints.RELATIVE;
 import static java.awt.GridBagConstraints.REMAINDER;
+import static java.lang.Math.max;
+import static java.lang.String.format;
 import static java.lang.System.currentTimeMillis;
 import static javax.swing.BorderFactory.createBevelBorder;
 import static javax.swing.Box.createHorizontalGlue;
@@ -23,17 +25,23 @@ import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
+import java.awt.Image;
 import java.awt.Insets;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Map.Entry;
+import java.util.NavigableMap;
 import java.util.Optional;
+import java.util.TreeMap;
 import java.util.concurrent.ExecutorService;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -48,6 +56,7 @@ import javax.swing.table.TableModel;
 
 import com.github.unix_junkie.cvs2unicode.FileProcessedListener;
 import com.github.unix_junkie.cvs2unicode.FileProcessor;
+import com.github.unix_junkie.cvs2unicode.ui.x11.X11Utilities;
 
 /**
  * @author Andrew ``Bass'' Shcheglov &lt;mailto:andrewbass@gmail.com&gt;
@@ -212,6 +221,32 @@ public final class MainFrameFactory {
 		statusBarConstraints.insets = new Insets(0, 10, 10, 10);
 		contentPane.add(statusBar, statusBarConstraints);
 
+		/*
+		 * KDE:			32x32
+		 * AfterStep:		48x48
+		 * Xfce4:		48x48
+		 * WindowMaker:		64x64
+		 * Enlightenment:	128x128 (just picks the largets icon available)
+		 *
+		 * Other X11 window managers fail to select the icon of the right size,
+		 * picking a 16x16 one instead. So we try to trick them by parsing
+		 * xprop output.
+		 */
+		final NavigableMap<Integer, Image> iconImages = getIconImages();
+		final Optional<Dimension> maximumIconSize = X11Utilities.getMaximumIconSize();
+		if (maximumIconSize.isPresent()) {
+			/*
+			 * Set either the icon greater or equal than the maximum
+			 * supported size, otherwise just pick the largest icon
+			 * available.
+			 */
+			@SuppressWarnings("null")
+			final int side = getMaximumSide(maximumIconSize.get());
+			final Entry<Integer, Image> ceilingEntry = iconImages.ceilingEntry(side);
+			mainFrame.setIconImage((ceilingEntry == null ? iconImages.lastEntry() : ceilingEntry).getValue());
+		} else {
+			mainFrame.setIconImages(new ArrayList<>(iconImages.values()));
+		}
 		mainFrame.setTitle("cvs2unicode");
 		mainFrame.getContentPane().setLayout(new BorderLayout());
 		mainFrame.setPreferredSize(new Dimension(640, 900));
@@ -221,6 +256,19 @@ public final class MainFrameFactory {
 		mainFrame.getContentPane().add(contentPane);
 
 		return mainFrame;
+	}
+
+	private static NavigableMap<Integer, Image> getIconImages() {
+		final NavigableMap<Integer, Image> iconImages = new TreeMap<>();
+		final int sizes[] = {128, 64, 48, 32, 24, 16};
+		for (final int size : sizes) {
+			iconImages.put(size, new ImageIcon(MainFrameFactory.class.getResource(format("icons/%d.png", size))).getImage());
+		}
+		return iconImages;
+	}
+
+	private static int getMaximumSide(final Dimension dimension) {
+		return max(dimension.width, dimension.height);
 	}
 
 	/**
