@@ -310,6 +310,16 @@ public abstract class Main {
 		@Nonnull
 		@SuppressWarnings("null")
 		final Optional<String> optionalCvsroot = Optional.ofNullable(cvsroot);
+		/*-
+		 * Note that WM_CLASS atom value will be different depending on
+		 * how the application is started: the default is
+		 *
+		 * "sun-awt-X11-XFramePeer", "com-github-unix_junkie-cvs2unicode-Main"
+		 *
+		 * while "mvn exec:java" will result in
+		 *
+		 * "sun-awt-X11-XFramePeer", "java-lang-Thread"
+		 */
 		final JFrame frame = MainFrameFactory.newInstance(cvsroot,
 				tableModel,
 				backgroundWorker,
