@@ -231,7 +231,8 @@ public final class Dictionary {
 	}
 
 	/**
-	 * Loads a hunspell, an ispell, or a simple word-per-line dictionary.
+	 * <p>Loads a hunspell, an ispell, or a simple word-per-line dictionary.
+	 * The input stream is closed by this method.</p>
 	 *
 	 * @param in the input stream used to load the dictionary from.
 	 */
@@ -281,6 +282,7 @@ public final class Dictionary {
 		}
 	}
 
+	@SuppressWarnings("resource")
 	private void loadCustomDictionary() {
 		try {
 			this.loadDictionary(new FileInputStream(getProperty("user.home")
@@ -288,7 +290,7 @@ public final class Dictionary {
 					+ ".cvs2unicode"
 					+ separatorChar
 					+ "custom.dic"));
-		} catch (final FileNotFoundException fnfe) {
+		} catch (@SuppressWarnings("unused") final FileNotFoundException fnfe) {
 			/*
 			 * Ignore.
 			 */

@@ -35,7 +35,7 @@ public abstract class AbstractCharsetDecoder implements CharsetDecoder {
 			@SuppressWarnings("null")
 			final String decodedData = this.charset.newDecoder().decode(ByteBuffer.wrap(in)).toString();
 			return decodedData;
-		} catch (final MalformedInputException | UnmappableCharacterException e) {
+		} catch (@SuppressWarnings("unused") final MalformedInputException | UnmappableCharacterException e) {
 			return new String(in, this.charset);
 		}
 	}
@@ -55,7 +55,7 @@ public abstract class AbstractCharsetDecoder implements CharsetDecoder {
 		final ByteBuffer buf;
 		try {
 			buf = this.charset.newEncoder().encode(CharBuffer.wrap(in));
-		} catch (final UnmappableCharacterException uce) {
+		} catch (@SuppressWarnings("unused") final UnmappableCharacterException uce) {
 			/*
 			 * Same as above, but doesn't throw
 			 * UnmappableCharacterException, silently replacing

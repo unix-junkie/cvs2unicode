@@ -240,7 +240,7 @@ final class Message extends JPanel {
 			@SuppressWarnings("null")
 			final String localCvsRootPath = toFile(Optional.ofNullable(getenv("CVSROOT"))).getPath();
 			return localCvsRootPath;
-		} catch (final IOException ignored) {
+		} catch (@SuppressWarnings("unused") final IOException ignored) {
 			/*
 			 * Ignore - we're checking the same at application startup.
 			 */

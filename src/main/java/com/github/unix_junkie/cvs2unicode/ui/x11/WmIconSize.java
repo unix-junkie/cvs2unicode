@@ -5,6 +5,7 @@ package com.github.unix_junkie.cvs2unicode.ui.x11;
 
 import static java.lang.Runtime.getRuntime;
 import static java.lang.String.format;
+import static java.lang.Thread.currentThread;
 import static java.nio.charset.StandardCharsets.US_ASCII;
 import static java.util.logging.Level.SEVERE;
 
@@ -109,8 +110,8 @@ final class WmIconSize {
 			final int xpropCode;
 			try {
 				xpropCode = xprop.waitFor();
-			} catch (final InterruptedException ie) {
-				Thread.currentThread().interrupt();
+			} catch (@SuppressWarnings("unused") final InterruptedException ie) {
+				currentThread().interrupt();
 				continue;
 			}
 

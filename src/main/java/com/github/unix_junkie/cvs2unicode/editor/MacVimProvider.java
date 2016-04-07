@@ -36,7 +36,7 @@ public final class MacVimProvider extends VimProvider {
 			 * Don't wait for process termination.
 			 */
 			getRuntime().exec(cmdarray);
-		} catch (final IOException ioe) {
+		} catch (@SuppressWarnings("unused") final IOException ioe) {
 			super.edit(file, line);
 		}
 	}
