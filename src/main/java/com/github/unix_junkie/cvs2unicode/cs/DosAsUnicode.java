@@ -40,7 +40,7 @@ public final class DosAsUnicode implements CharsetDecoder {
 				final String accumulatorContents = accumulator.toString();
 				final String decodedAccumulatorContents = DOS.decode(UNICODE.encode(accumulatorContents));
 				result.append(decodedAccumulatorContents);
-				result.append(c);
+				result.append('\ufffd');
 				accumulator.setLength(0);
 			} else {
 				accumulator.append(c);

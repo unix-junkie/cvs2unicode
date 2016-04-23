@@ -46,7 +46,7 @@ public final class Dictionary {
 	private static final String DARWIN_SEARCH_PATHS[] = {
 		"/System/Library/Spelling",
 		"/Library/Spelling",
-		getProperty("user.home") + File.separatorChar + "Spelling",
+		getProperty("user.home") + separatorChar + "Spelling",
 		"/opt/local/share/hunspell",
 		"/sw/share/hunspell",
 	};

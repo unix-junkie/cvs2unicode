@@ -18,7 +18,7 @@ public interface CharsetDecoder {
 	 * @param in
 	 * @throws CharacterCodingException
 	 * @see #decode(ByteBuffer)
-	 * @see java.nio.charset.CharsetDecoder#decode(java.nio.ByteBuffer)
+	 * @see java.nio.charset.CharsetDecoder#decode(ByteBuffer)
 	 */
 	String decode(final byte in[]) throws CharacterCodingException;
 
@@ -26,7 +26,7 @@ public interface CharsetDecoder {
 	 * @param in
 	 * @throws CharacterCodingException
 	 * @see #decode(byte[])
-	 * @see java.nio.charset.CharsetDecoder#decode(java.nio.ByteBuffer)
+	 * @see java.nio.charset.CharsetDecoder#decode(ByteBuffer)
 	 */
 	default String decode(final ByteBuffer in) throws CharacterCodingException {
 		/*

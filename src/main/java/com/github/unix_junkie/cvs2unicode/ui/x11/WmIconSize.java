@@ -167,7 +167,7 @@ final class WmIconSize {
 	@Override
 	@SuppressWarnings("null")
 	public String toString() {
-		return String.format("%s(%s):\n"
+		return format("%s(%s):\n"
 				+ "                minimum icon size: %d by %d\n"
 				+ "                maximum icon size: %d by %d\n"
 				+ "                incremental size change: %d by %d",
